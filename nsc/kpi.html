@@ -1,16 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KPI Dashboard</title>
   <link rel="stylesheet" href="styles.css" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <script src="../scripts/auth_system.js"></script>
+  <script>
+    MZO_AUTH.checkSession();
+  </script>
 </head>
+
 <body>
   <header class="header">
     <div class="container">
-      <h1><i class="fas fa-chart-bar"></i> KPI Dashboard <span class="header-subtitle">(Based on Pending Cases)</span></h1>
+      <h1><i class="fas fa-chart-bar"></i> KPI Dashboard <span class="header-subtitle">(Based on Pending Cases)</span>
+      </h1>
       <p class="subtitle">Updated up to <span id="todayDateSubtitle"></span></p>
     </div>
   </header>
@@ -134,4 +141,5 @@
 
   <script src="kpi.js"></script>
 </body>
+
 </html>

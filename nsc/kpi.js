@@ -5,7 +5,7 @@ let filteredData = [];
 // --- NEW: State for class filters ---
 let selectedClasses = new Set();
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     loadData();
     setupEventListeners();
 });
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Update the "Updated up to" date in the subtitle
 function updateMaxTodayDate(data) {
     const subtitleSpan = document.getElementById('todayDateSubtitle');
-    if (!subtitleSpan) return; 
+    if (!subtitleSpan) return;
     const validDates = data.filter(d => d.TODAY).map(d => {
         const parts = d.TODAY.split('/');
         return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
@@ -29,10 +29,28 @@ function updateMaxTodayDate(data) {
 
 // Load data from nsc.json
 async function loadData() {
+    const user = MZO_AUTH.getUser();
     try {
         const response = await fetch('../data/nsc.json');
         if (response.ok) {
-            allData = await response.json();
+            let data = await response.json();
+
+            // Apply Hierarchical Filtering
+            if (user && user.role !== 'admin') {
+                const normalize = (val) => String(val || '').toUpperCase().trim();
+                if (user.ccc) {
+                    const uCCC = normalize(user.ccc);
+                    data = data.filter(d => normalize(d.SUPP_OFF).includes(uCCC) || normalize(d.CCC_CODE) === uCCC);
+                } else if (user.division) {
+                    const uDiv = normalize(user.division);
+                    data = data.filter(d => normalize(d.DIVN_NAME).includes(uDiv) || normalize(d.DIVN_CODE) === uDiv);
+                } else if (user.region) {
+                    const uReg = normalize(user.region);
+                    data = data.filter(d => normalize(d.REGION).includes(uReg) || normalize(d.REG) === uReg);
+                }
+            }
+
+            allData = data;
             processData();
         } else {
             console.error('Failed to load nsc.json');
@@ -230,7 +248,7 @@ function populateKpiTable(dataMap, tableId, useCCCName = false, delayType = null
                 const key = th.dataset.sort;
                 const newDir = (table.dataset.sortKey === key && table.dataset.sortDir === 'asc') ? 'desc' : 'asc';
                 table.dataset.sortKey = key;
-                table.dataset.sortDir = newDir; 
+                table.dataset.sortDir = newDir;
                 populateKpiTable(dataMap, tableId, useCCCName, delayType); // Re-sort and re-populate THIS table
             });
             th.dataset.listenerAttached = 'true';

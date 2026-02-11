@@ -4,97 +4,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Docket Call Dashboard</title>
-    <!-- Google Font: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Docket Dashboard | Malda Zone</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Font: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PapaParse -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="scripts/auth_system.js"></script>
+    <script>MZO_AUTH.checkSession();</script>
     <style>
-        html,
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --surface: #ffffff;
+            --background: #f1f5f9;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --elevation-1: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --elevation-2: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
         body {
-            width: 100%;
-            /* Ensure html and body take full width */
-            overflow-x: hidden;
-            /* Prevent horizontal scrolling on the root elements */
-            margin: 0;
-            /* Remove default body margin */
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
             padding: 0;
-            /* Remove default body padding */
+            margin: 0;
+            line-height: 1.5;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #111827;
-            /* Darker background */
-            padding: 1rem;
-            /* Apply padding to body */
-            color: #F9FAFB;
-            /* Light text color for body */
-            box-sizing: border-box;
-            /* Include padding in element's total width and height */
+        /* Compact Header */
+        .dashboard-header {
+            background: var(--primary);
+            color: white;
+            padding: 12px 20px;
+            box-shadow: var(--elevation-2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .dashboard-container {
-            max-width: 1280px;
-            width: 100%;
-            /* Ensure container takes full available width */
-            margin: auto;
-            background-color: #1F2937;
-            /* Darker container background */
-            border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
-            /* More prominent shadow */
-            padding: 2.0rem;
-            box-sizing: border-box;
-            /* Include padding in element's total width and height */
+        .dashboard-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 500;
         }
 
-        .main-heading {
-            font-size: 2.5rem;
-            /* Larger font size */
-            font-weight: 700;
-            color: #F9FAFB;
-            /* Light text color */
-            margin-bottom: 0.5rem;
+        .header-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.9;
         }
 
-        .sub-heading {
-            font-size: 1.35rem;
-            /* Slightly larger */
-            color: #9CA3AF;
-            /* Lighter grey */
-            margin-bottom: 1rem;
+        /* Container scale */
+        .container-fluid {
+            max-width: 1400px;
+            padding: 16px;
         }
 
-        .latest-date-text {
+        /* Professional Filter Row */
+        .filter-row {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            box-shadow: var(--elevation-1);
+        }
+
+        .form-label {
+            font-size: 0.75rem;
             font-weight: 600;
-            color: #5EEAD4;
-            /* Teal accent */
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-transform: uppercase;
         }
 
-        @keyframes subtle-glow {
-            from {
-                text-shadow: 0 0 4px rgba(20, 184, 166, 0.4);
-            }
-
-            to {
-                text-shadow: 0 0 12px rgba(94, 234, 212, 0.9);
-            }
+        .form-select,
+        .form-control {
+            font-size: 0.875rem;
+            border-radius: 6px;
+            border-color: var(--gray-300);
+            min-height: 40px;
         }
 
-        .live-date-animation {
-            animation: subtle-glow 2s infinite alternate ease-in-out;
+        .form-select:focus,
+        .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Summary Cards */
+        .summary-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: var(--elevation-1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            border-left: 4px solid var(--primary);
+            height: 100%;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--elevation-2);
+        }
+
+        .summary-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .summary-subtitle {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        /* Severity Colors */
+        .card-tech {
+            border-left-color: var(--warning);
+        }
+
+        .card-old {
+            border-left-color: var(--danger);
+        }
+
+        .card-unique {
+            border-left-color: var(--accent, #06b6d4);
+        }
+
+        .card-total {
+            border-left-color: var(--primary);
+        }
+
+        /* Problem Type Badges */
+        .prob-badge {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .bg-tech {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .bg-non-tech {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        /* Modal Enhancements */
+        .modal-content {
+            border-radius: 12px;
+            border: none;
+            box-shadow: var(--elevation-4);
+        }
+
+        .modal-header {
+            background: var(--gray-100);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 12px 20px;
+        }
+
+        .table-docket {
+            font-size: 0.85rem;
+        }
+
+        .table-docket th {
+            background: var(--gray-100);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Mobile specific */
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 12px;
+            }
+
+            .summary-card {
+                padding: 12px;
+            }
+
+            .dashboard-header h2 {
+                font-size: 1.1rem;
+            }
+
+            .filter-row {
+                padding: 12px;
+            }
         }
 
         .loader {
             width: 32px;
             height: 32px;
-            border: 4px solid #14B8A6;
-            /* Teal loader */
+            border: 4px solid var(--primary);
             border-top-color: transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 1rem auto;
+            margin: 2rem auto;
             display: none;
         }
 
@@ -104,2236 +243,675 @@
             }
         }
 
-        .filter-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .filter-section {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .filter-label {
-            font-weight: 500;
-            margin-bottom: 0.25rem;
-            color: #e2e8f0;
-            /* Light text */
-        }
-
-        .filter-select {
-            padding: 0.5rem 0.75rem;
-            /* Increased padding */
-            font-size: 1rem;
-            /* Larger font */
-            border-radius: 0.375rem;
-            border: 1px solid #4B5563;
-            /* Darker border */
-            background-color: #374151;
-            /* Darker background */
-            color: #F9FAFB;
-            /* Light text */
-            appearance: none;
-            /* Remove default arrow */
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3e%3cpath d='M7 7l3-3 3 3m0 6l-3 3-3-3' stroke='%23D1D5DB' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 1.5em 1.5em;
-            cursor: pointer;
-        }
-
-        .prob-type-cards-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 0.5rem;
-            /* Reduced gap */
-        }
-
-        @media (min-width: 640px) {
-            .prob-type-cards-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        .prob-type-card {
-            background-color: #374151;
-            border: 1px solid #4B5563;
-            color: #D1D5DB;
-            padding: 1rem 1.25rem;
-            border-radius: 0.75rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            min-height: 4rem;
-            font-size: 1.1rem;
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            cursor: pointer;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.12);
-        }
-
-        .prob-type-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
-            border-color: #14B8A6;
-        }
-
-        .prob-type-card.conductor-snap-alert {
-            background: linear-gradient(135deg, #f52e0b 0%, #c74220 100%);
-            color: white;
-            border-color: #fb2b24;
-            box-shadow: 0 0 15px rgba(245, 159, 11, 0);
-        }
-
-        .prob-type-card-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #F9FAFB;
-        }
-
-        .prob-type-card-count {
-            font-size: 1.8rem;
-            font-weight: 900;
-            display: flex;
-            align-items: baseline;
-            gap: 0.3rem;
-        }
-
-        .prob-type-card.technical .prob-type-card-count {
-            color: #FBBF24;
-            /* Amber for technical counts */
-        }
-
-        .prob-type-card.non-technical .prob-type-card-count {
-            color: #5EEAD4;
-            /* Teal for non-technical counts */
-        }
-
-        .prob-type-card-unique-conid-count {
-            font-size: 0.9rem;
-            color: #9CA3AF;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-
-        .no-data-message.hidden {
-            display: none;
-        }
-
-        .no-data-message {
-            grid-column: 1 / -1;
-            text-align: center;
-            color: #9CA3AF;
-            /* Lighter grey for message */
-        }
-
-        @media (max-width: 640px) {
-            body {
-                padding: 0.5rem;
-            }
-
-            .dashboard-container {
-                padding: 1rem;
-            }
-
-            .main-heading {
-                font-size: 1.6rem;
-                margin-bottom: 0.25rem;
-            }
-
-            .sub-heading {
-                font-size: 1rem;
-                margin-bottom: 0.5rem;
-            }
-
-            .filter-container {
-                gap: 0.5rem;
-                margin-bottom: 1rem;
-            }
-
-            .filter-select {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.85rem;
-            }
-
-            .prob-type-card {
-                padding: 0.6rem 0.8rem;
-                font-size: 0.85rem;
-                min-height: 3rem;
-            }
-
-            .prob-type-card-title {
-                font-size: 1rem;
-            }
-
-            .prob-type-card-count {
-                font-size: 1.4rem;
-            }
-
-            .prob-type-card-unique-conid-count {
-                font-size: 0.7rem;
-            }
-
-            #docket-list-modal * {
-                /* Renamed from #details-modal */
-                font-size: 0.7rem !important;
-            }
-
-            #docket-list-modal table th,
-            #docket-list-modal table td {
-                padding: 0.25rem !important;
-            }
-
-            #docket-list-modal button {
-                font-size: 0.75rem !important;
-                padding: 0.3rem 0.6rem !important;
-            }
-
-            #modal-content {
-                padding: 0.5rem !important;
-            }
-
-            #docket-detail-modal {
-                padding: 0.5rem;
-            }
-
-            #docket-detail-modal div {
-                padding: 0.5rem !important;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .prob-type-cards-grid {
-                gap: 0.5rem;
-            }
-        }
-
-        .checkbox-row {
-            display: flex;
-            flex-wrap: nowrap;
-            /* Ensure items stay in one line */
-            overflow-x: auto;
-            /* Enable horizontal scrolling */
-            gap: 6px;
-            /* Reduced gap */
-            margin: 0.5rem 0 1rem;
-            /* Reduced margin */
-            font-size: 0.9rem;
-            /* Slightly larger font */
-            padding-bottom: 0.5rem;
-            /* Add padding for scrollbar */
-        }
-
-        .checkbox-row label {
-            display: flex;
-            align-items: center;
-            background: #374151;
-            /* Darker background for checkboxes */
-            color: #D1D5DB;
-            /* Light text */
-            padding: 4px 10px;
-            /* Increased padding */
-            border-radius: 6px;
-            /* More rounded */
-            white-space: nowrap;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            flex-shrink: 0;
-            /* Prevent labels from shrinking */
-        }
-
-        .checkbox-row label:hover {
-            background-color: #4B5563;
-            /* Highlight on hover */
-        }
-
-        .checkbox-row input[type="checkbox"] {
-            margin-right: 6px;
-            /* Increased margin */
-            accent-color: #14B8A6;
-            /* Teal accent for checkbox */
-            transform: scale(1.1);
-            /* Slightly larger checkbox */
-        }
-
-        .header-compact {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            font-size: 1.1rem;
-            /* Larger font */
+        .latest-date-text {
             font-weight: 600;
-            color: #F9FAFB;
-            /* Light text */
-            margin-bottom: 0.75rem;
-            /* Increased margin */
-            flex-wrap: wrap;
-            gap: 0.75rem;
+            color: #fff;
         }
 
-        .sub-header-text {
-            font-weight: 500;
-            color: #D1D5DB;
-            /* Light text */
-        }
+        @keyframes subtle-glow {
+            from {
+                text-shadow: 0 0 4px rgba(255, 255, 255, 0.4);
+            }
 
-        @media (max-width: 640px) {
-            .header-compact {
-                font-size: 0.95rem;
-                margin-bottom: 0.5rem;
+            to {
+                text-shadow: 0 0 12px rgba(255, 255, 255, 0.9);
             }
         }
 
-        /* New CSS for Region Summary Cards */
-        .region-summary-cards-grid {
-            display: flex;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            gap: 0.5rem;
-            /* Compact gap */
-            margin-top: 1rem;
-            margin-bottom: 1.5rem;
-            /* Space below region summary cards */
-            justify-content: initial;
-            padding-bottom: 0.5rem;
-            /* Add padding for scrollbar */
-        }
-
-        .region-summary-card {
-            background-color: #1F2937;
-            /* Darker background */
-            padding: 0.4rem 0.6rem;
-            /* Compact padding */
-            border-radius: 0.5rem;
-            /* More rounded */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 4rem;
-            /* Compact minimum height */
-            box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.3);
-            /* Subtle shadow */
-            text-align: center;
-            flex-shrink: 0;
-            width: 110px;
-            /* Compact fixed width */
-            color: #D1D5DB;
-            /* Light text */
-        }
-
-        .region-summary-card-name {
-            font-size: 0.75rem;
-            /* Compact font size */
-            font-weight: 600;
-            /* Bolder */
-            color: #9CA3AF;
-            /* Lighter grey */
-            margin-bottom: 0.2rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
-        }
-
-        .region-summary-card-count {
-            font-size: 1.2rem;
-            /* Compact count font */
-            font-weight: 800;
-            /* Bolder */
-            color: #5EEAD4;
-            /* Teal for count */
-        }
-
-        .region-summary-card-unique-count {
-            font-size: 0.7rem;
-            color: #9CA3AF;
-            font-weight: 500;
-            margin-top: 0.1rem;
-        }
-
-        /* Adjust layout for smaller screens */
-        @media (max-width: 480px) {
-            .region-summary-cards-grid {
-                gap: 0.5rem;
-            }
-
-            .region-summary-card {
-                min-height: 3.5rem;
-                padding: 0.4rem 0.5rem;
-                width: 95px;
-                /* Slightly smaller width for very small screens */
-            }
-
-            .region-summary-card-name {
-                font-size: 0.7rem;
-            }
-
-            .region-summary-card-count {
-                font-size: 1.1rem;
-            }
-        }
-
-        /* New Filter Card Styles */
-        .filter-group-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #9CA3AF;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .filter-cards-grid {
-            display: flex;
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            gap: 0.75rem;
-            /* Gap between groups */
-            padding-bottom: 0.75rem;
-            /* For scrollbar */
-            margin-bottom: 0.75rem;
-            /* Reduced margin */
-        }
-
-        .filter-region-group {
-            flex-shrink: 0;
-            display: flex;
-            gap: 0.4rem;
-            /* Reduced gap */
-            align-items: center;
-            background-color: rgba(0, 0, 0, 0.1);
-            padding: 0.5rem;
-            border-radius: 0.75rem;
-        }
-
-        .filter-card {
-            flex-shrink: 0;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            border: 2px solid transparent;
-            white-space: nowrap;
-            background-color: #374151;
-            /* Neutral background for Division cards */
-            color: #D1D5DB;
-            /* Standard light text */
-        }
-
-        .filter-card.region {
-            background-color: #1F2937;
-            /* Slightly darker for Region cards */
-            font-weight: 700;
-            /* Bolder font */
-            font-style: italic;
-        }
-
-        .filter-card:hover {
-            background-color: #4B5563;
-            /* Slightly lighter on hover */
-        }
-
-        .filter-card.active {
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-            background-color: #14B8A6;
-            /* Unified active color */
-            border-color: #5EEAD4;
-            /* Unified active border */
-            color: #111827;
-            /* Dark text for active */
-        }
-
-        /* Style for duplicate Con ID rows in the modal */
-        .duplicate-row {
-            background-color: rgba(245, 158, 11, 0.15);
-            /* Amber background */
-            color: #FBBF24;
-            /* Amber text for duplicates */
-        }
-
-        /* Modal Styling */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background-color: rgba(17, 24, 39, 0.8);
-            /* Darker overlay */
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-container {
-            background: #1F2937;
-            /* Dark modal background */
-            border-radius: 0.75rem;
-            width: 95%;
-            max-width: 900px;
-            max-height: 85vh;
-            /* Slightly more height */
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            font-size: 0.9rem;
-            /* Slightly larger font */
-            color: #F9FAFB;
-            /* Light text */
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
-        }
-
-        .modal-header {
-            position: sticky;
-            top: 0;
-            background: #374151;
-            /* Darker neutral header */
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.75rem 1rem;
-            /* Increased padding */
-            font-size: 1rem;
-            /* Larger font */
-            border-top-left-radius: 0.75rem;
-            border-top-right-radius: 0.75rem;
-        }
-
-        .modal-close-button {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            /* Larger close button */
-            font-weight: bold;
-            cursor: pointer;
-            padding: 0.2rem 0.5rem;
-            border-radius: 0.3rem;
-            transition: background-color 0.2s ease;
-        }
-
-        .modal-close-button:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .modal-content-scrollable {
-            overflow: auto;
-            padding: 1rem;
-            /* Increased padding */
-        }
-
-        .modal-table {
-            width: 100%;
-            border-collapse: collapse;
-            color: #D1D5DB;
-            /* Light text for table */
-        }
-
-        .modal-table th,
-        .modal-table td {
-            text-align: left;
-            padding: 0.6rem;
-            /* Increased padding */
-            border-bottom: 1px solid #374151;
-            /* Darker border */
-        }
-
-        .modal-table th {
-            background-color: #374151;
-            /* Darker header background */
-            font-weight: 600;
-        }
-
-        .modal-table tbody tr:hover {
-            background-color: #374151;
-            /* Darker hover effect */
-            cursor: pointer;
-        }
-
-        /* CCC Summary Modal Specific Styles */
-        .ccc-tabs {
-            display: flex;
-            flex-wrap: wrap;
-            border-bottom: 1px solid #374151;
-            /* Darker border */
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            gap: 0.5rem;
-        }
-
-        .ccc-tab-button {
-            background-color: #374151;
-            /* Darker background */
-            color: #D1D5DB;
-            /* Light text */
-            padding: 0.6rem 1rem;
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.2s ease, transform 0.1s ease;
-            flex-shrink: 0;
-        }
-
-        .ccc-tab-button.active,
-        .ccc-tab-button:hover {
-            background-color: #14B8A6;
-            /* Teal for active/hover */
-            color: #111827;
-            transform: translateY(-2px);
-        }
-
-        .ccc-tab-content {
-            padding: 0.5rem 0;
-        }
-
-        .ccc-summary-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #374151;
-            /* Darker background */
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .ccc-summary-item:hover {
-            background-color: #14B8A6;
-            /* Teal hover effect */
-        }
-
-        .ccc-summary-name {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .ccc-summary-count {
-            font-weight: 800;
-            font-size: 1.5rem;
-            color: #5EEAD4;
-            /* Teal for count */
-        }
-
-        /* Docket Detail Modal */
-        #docket-detail-modal .modal-container {
-            max-width: 550px;
-            /* Slightly wider */
-        }
-
-        #docket-detail-modal .modal-header {
-            background: #374151;
-            /* Neutral header */
-        }
-
-        #docket-detail-modal table td {
-            padding: 0.5rem 0.25rem;
-            vertical-align: top;
-        }
-
-        #docket-detail-modal table strong {
-            color: #9CA3AF;
-            /* Lighter grey for labels */
-        }
-
-        .download-icon {
-            margin-left: 0.75rem;
-            cursor: pointer;
-            font-size: 1.1em;
-            color: #D1D5DB;
-            transition: color 0.2s ease;
-        }
-
-        .download-icon:hover {
-            color: #5EEAD4;
-            /* Teal on hover */
+        .live-date-animation {
+            animation: subtle-glow 2s infinite alternate ease-in-out;
         }
     </style>
 </head>
 
 <body>
-
-    <div class="dashboard-container">
-        <!-- Header -->
-        <div class="header-compact">
-            <strong>Docket Call</strong>
-            <span class="sub-header-text">Upto docket at: <span id="latest-docket-date"
-                    class="latest-date-text live-date-animation">Loading...</span></span>
+    <header class="dashboard-header">
+        <div>
+            <h2>Docket Dashboard</h2>
+            <div class="header-subtitle">Malda Zone | Actionable Insights</div>
         </div>
-
-
-        <!-- Loading Indicator -->
-        <div id="loading-indicator" class="loader"></div>
-        <p id="error-message" style="color: red; text-align: center; display: none;">Failed to load data. Please check
-            the CSV URL or your network connection.</p>
-        <!-- Description Type Checkboxes -->
-        <div class="checkbox-row">
-            <label><input type="checkbox" id="technical-checkbox" checked> Tech</label>
-            <label><input type="checkbox" id="nontechnical-checkbox"> Non-Tech</label>
-            <label><input type="checkbox" id="older-checkbox"> 24H+</label>
-            <label><input type="checkbox" id="older48-checkbox"> 48H+</label>
+        <div class="text-end">
+            <div id="latest-docket-date" class="latest-date-text live-date-animation">Loading...</div>
+            <div class="header-subtitle"><i class="fas fa-clock me-1"></i>Last Update</div>
         </div>
+    </header>
 
-        <!-- Region-wise Technical Docket Summary Cards -->
-        <div id="region-summary-cards" class="region-summary-cards-grid" style="display: none;">
-            <p id="no-region-data-message" class="no-data-message hidden">No docket data for selected filters across
-                regions.</p>
-        </div>
-
-        <!-- Combined Region/Division Filter Cards -->
-        <div id="combined-filter-cards-container" style="display: none;">
-            <div id="combined-filter-cards" class="filter-cards-grid"></div>
-        </div>
-
-        <!-- Filter Controls -->
-        <div class="filter-container" id="filter-controls-container" style="display: none;">
-            <!-- CCC Filter -->
-            <div class="filter-section">
-                <select id="ccc-select" class="filter-select" title="CCC"></select>
+    <div class="container-fluid">
+        <!-- Filter Row -->
+        <div class="filter-row" id="filter-controls-container">
+            <div class="row g-3">
+                <div class="col-md-2 col-sm-6">
+                    <label class="form-label">Region</label>
+                    <select id="region-select" class="form-select">
+                        <option value="All">All Regions</option>
+                    </select>
+                </div>
+                <div class="col-md-2 col-sm-6">
+                    <label class="form-label">Division</label>
+                    <select id="division-select" class="form-select">
+                        <option value="All">All Divisions</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label">CCC / Unit</label>
+                    <select id="ccc-select" class="form-select">
+                        <option value="All">All Units</option>
+                    </select>
+                </div>
+                <div class="col-md-2 col-sm-6">
+                    <label class="form-label">Age / Scope</label>
+                    <select id="age-filter" class="form-select">
+                        <option value="all">All Dockets</option>
+                        <option value="today">Today's</option>
+                        <option value="24h">Older than 24H</option>
+                        <option value="48h">Older than 48H</option>
+                        <option value="3d">Older than 3 Days</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-12">
+                    <label class="form-label">Search</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i
+                                class="fas fa-search text-muted"></i></span>
+                        <input type="text" id="table-search" class="form-control border-start-0"
+                            placeholder="Consumer ID / Party Name">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-2 d-flex gap-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="technical-checkbox" checked>
+                    <label class="form-check-label small fw-500" for="technical-checkbox">Technical Dockets</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="nontechnical-checkbox">
+                    <label class="form-check-label small fw-500" for="nontechnical-checkbox">Non-Technical</label>
+                </div>
             </div>
         </div>
-        <!-- Problem Type Cards -->
-        <div id="prob-type-cards" class="prob-type-cards-grid" style="display: none;">
-            <!-- Problem type cards will be dynamically loaded here -->
-            <p id="no-data-message" class="no-data-message hidden">No data available for the selected filters.</p>
+
+        <div id="loading-indicator" class="loader"></div>
+        <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+
+        <!-- Summary Grid -->
+        <div class="row g-3 mb-4" id="main-summary-grid">
+            <div class="col-md-3 col-sm-6">
+                <div class="summary-card card-total">
+                    <div class="summary-title">Total Active Dockets</div>
+                    <div class="summary-value" id="total-dockets-count">0</div>
+                    <div class="summary-subtitle" id="total-unique-subtitle">0 Unique Consumers</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="summary-card card-tech">
+                    <div class="summary-title">Technical Issues</div>
+                    <div class="summary-value text-warning" id="tech-dockets-count">0</div>
+                    <div class="summary-subtitle">Requiring Field Action</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="summary-card card-old">
+                    <div class="summary-title">Overdue (24h+)</div>
+                    <div class="summary-value text-danger" id="overdue-dockets-count">0</div>
+                    <div class="summary-subtitle">High Priority Attention</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <div class="summary-card card-unique">
+                    <div class="summary-title">Critical / Snap</div>
+                    <div class="summary-value" id="critical-dockets-count" style="color: #06b6d4;">0</div>
+                    <div class="summary-subtitle">Major Power Disruptions</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Problem Type Analysis -->
+        <div id="region-summary-cards" class="row g-3">
+            <!-- Dynamically populated Region/CCC summary grid -->
+        </div>
+
+        <!-- No Data Container -->
+        <div id="no-data-message" class="text-center py-5 text-muted" style="display: none;">
+            <i class="fas fa-search fa-3x mb-3 opacity-25"></i>
+            <h5>No dockets found matching your filters</h5>
+            <p>Try clearing your search or adjusting the filters.</p>
         </div>
     </div>
 
-    <!-- Script Dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="scripts/auth_system.js"></script>
+    <!-- Modals -->
+    <!-- Docket List Modal -->
+    <div class="modal fade" id="docketListModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header d-flex justify-content-between align-items-center">
+                    <h5 class="modal-title fw-600" id="modalTitle">Problem Analysis</h5>
+                    <div class="d-flex align-items-center gap-3">
+                        <button class="btn btn-sm btn-outline-primary" onclick="downloadListModalCsv()">
+                            <i class="fas fa-download me-1"></i>CSV
+                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="ccc-tab-container" class="border-bottom bg-light px-3 py-2 overflow-auto shadow-sm"
+                        style="white-space: nowrap;">
+                        <!-- CCC Tabs inserted here -->
+                    </div>
+                    <div id="modalContent" class="p-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Docket Detail Modal -->
+    <div class="modal fade" id="docketDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-600">Docket Information</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0" id="docketDetailContent"></div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button class="btn btn-primary btn-sm" onclick="downloadDetailModalCsv()">
+                        <i class="fas fa-download me-1"></i>Download CSV
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="scripts/hierarchy_mapping.js"></script>
 
     <script>
-        // Session Check - Ensure user is authenticated
-        MZO_AUTH.checkSession();
-        const currentUser = MZO_AUTH.getUser();
+        // Use a global variable to keep track of the Bootstrap Modal instances
+        let b5DocketListModal;
+        let b5DocketDetailModal;
 
-        // Data source URL - IMPORTANT: This URL must be publicly accessible.
-
-        // If you encounter "Failed to load data" error, ensure the Google Sheet is published to web as CSV.
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTT56PULgjKw_-wu8lmMWNE6SC1KBDyAKxeHaMloZJWUQ9HQsJoqosYF33DrQK3NX9Bvfn0mjfx-dkP/pub?gid=1059428699&single=true&output=csv';
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTT56PULgjKw_-wu8lmMWNE6SC1KBDyAKxeHaMloZJWUQ9HQsJoqosYF33DrQK3NX9Bvfn0mjfx-dkP/pub?gid=1059428699&single=true&output=csv";
+        const TECHNICAL_PROB_TYPES = [
+            "Fuse blown at meter/cut-out", "Outage, HT", "Outage, LT",
+            "Broken/Loose LT jumper", "No Current", "Technical Fault-HT outage",
+            "HT Jumper Snapped", "HT Line Snapped", "L.T. Jumper Snapped",
+            "Low Voltage", "LT AB cable burnt", "LT Line Snapped", "L.T. Line Snapped",
+            "Neutral Out", "Service Connection Wire Burnt", "Service wire snapped",
+            "Voltage High", "Outage, Phase", "DTR failure", "Conductor snap",
+            "Dis. transformer problem", "Breakage or uprooting of pole", "Flashing/Glowing",
+            "No power", "Single phasing", "Frequent tripping", "Cable fault",
+            "Service (main) problem", "Voltage complaint", "Voltage fluctuation",
+            "Short circuit", "Tree fault", "Sagging of wire", "Load Shedding Problem",
+            "LT wire problem", "Fuse problem", "Earthing problem", "Bird fault"
+        ];
+        const CRITICAL_TYPES = ["Conductor snap", "HT Line Snapped", "LT Line Snapped", "DTR failure", "Dis. transformer problem", "Breakage or uprooting of pole"];
 
         const TECHNICAL_PRIORITY = {
-            "Conductor snap": 1,
-            "Dis. transformer problem": 2,
-            "Breakage or uprooting of pole": 3,
-            "Flashing/Glowing": 4,
-            "No power": 5,
-            "Single phasing": 6,
-            "Frequent tripping": 7,
-            "Cable fault": 8,
-            "Service (main) problem": 9,
-            "Voltage complaint": 10,
-            "Voltage fluctuation": 11,
-            "Short circuit": 12,
-            "Tree fault": 13,
-            "Sagging of wire": 14,
-            "Load Shedding Problem": 15,
-            "LT wire problem": 16,
-            "Fuse problem": 17,
-            "Earthing problem": 18,
-            "Bird fault": 19
+            "Conductor snap": 1, "HT Line Snapped": 2, "LT Line Snapped": 3,
+            "No Current": 10, "Outage, HT": 11, "Outage, LT": 12, "Neutral Out": 13
         };
 
-        // New list of problem types considered technical
-        const TECHNICAL_PROB_TYPES = [
-            "Meter Burnt Problem",
-            "Meter stopped/defective",
-            "Meter defective and No Power",
-            "Meter (Tampering)",
-            "Service (main) problem",
-            "Breakage or uprooting of pole",
-            "Flashing/Glowing",
-            "No power",
-            "Dis. transformer problem",
-            "Voltage fluctuation",
-            "Insulator break at pole",
-            "Earthing problem",
-            "Fuse problem",
-            "Alteration of Services",
-            "Load Shedding Problem",
-            "Bird fault",
-            "Conductor snap",
-            "LT wire problem",
-            "Sagging of wire",
-            "Single phasing",
-            "Voltage complaint",
-            "Cable fault",
-            "Short circuit"
-        ];
-
-        // Global variable to store fetched docket call data
-        let docketCallData = [];
-        // Global variables to hold data for CSV download
-        let currentCCCdocketsForDownload = [];
-        let currentDetailDocketsForDownload = [];
-
-        // CCC Code / Name Mapping
-        const regionData = {
-            "MALDA REGION": {
-                code: "6610000",
-                divisions: {
-                    "MALDA DIVISION": {
-                        code: "6611000",
-                        cccs: {
-                            "MANIKCHAK CCC": "6611101",
-                            "GOLAPGANJ CCC": "6611102",
-                            "BAISHNABNAGAR CCC": "6611103",
-                            "KALIACHAK CCC": "6611104",
-                            "MOTHABARI CCC": "6611105",
-                            "SUJAPUR CCC": "6611106",
-                            "RATHBARI CCC": "6611107",
-                            "FULBARI CCC": "6611108",
-                            "MOKDUMPUR CCC": "6611109",
-                        }
-                    },
-                    "CHANCHAL DIVISION": {
-                        code: "6612000",
-                        cccs: {
-                            "BHALUKA CCC": "6612101",
-                            "SAMSI CCC": "6612102",
-                            "PARANPUR CCC": "6612103",
-                            "CHANCHAL CCC": "6612104",
-                            "MALATIPUR CCC": "6612105",
-                            "HARISHCHANDRAPUR CCC": "6612106",
-                            "KUSHIDA CCC": "6612107",
-                        }
-                    },
-                    "GAZOLE DIVISION": {
-                        code: "6613000",
-                        cccs: {
-                            "GAZOL CCC": "6613101",
-                            "AIHO. CCC": "6613102",
-                            "PANDUA CCC": "6613103",
-                            "BAMONGOLA CCC": "6613104",
-                            "OLD MALDA CCC": "6613105",
-                        }
-                    }
-                }
-            },
-            "UTTAR DINAJPUR REGION": {
-                code: "6620000",
-                divisions: {
-                    "RAIGANJ DIVISION": {
-                        code: "6621000",
-                        cccs: {
-                            "ITAHAR CCC": "6621101",
-                            "HEMTABAD CCC": "6621102",
-                            "KALIYAGANJ CCC": "6621103",
-                            "RAIGANJ CCC": "6621104",
-                            "BIRNAGAR CCC": "6621105",
-                            "KARANDIGHI CCC": "6621106",
-                        }
-                    },
-                    "ISLAMPUR DIVISION": {
-                        code: "6622000",
-                        cccs: {
-                            "ISLAMPUR CCC": "6622101",
-                            "CHOPRA CCC": "6622102",
-                            "DALKHOLA CCC": "6622103",
-                            "GOALPOKHER CCC": "6622104",
-                            "KANKI CCC": "6622105",
-                        }
-                    }
-                }
-            },
-            "DAKSHIN DINAJPUR REGION": {
-                code: "6630000",
-                divisions: {
-                    "BALURGHAT DIVISION": {
-                        code: "6631000",
-                        cccs: {
-                            "BALURGHAT CCC": "6631101",
-                            "TAPAN CCC": "6631102",
-                            "KUMARGANJ CCC": "6631103",
-                            "HILI CCC": "6631104",
-                            "PATIRAM CCC": "6631105",
-                        }
-                    },
-                    "BUNIADPUR DIVISION": {
-                        code: "6632000",
-                        cccs: {
-                            "BUNIADPUR CCC": "6632101",
-                            "KUSMANDI CCC": "6632102",
-                            "HARIRAMPUR CCC": "6632103",
-                            "GANGARAMPUR CCC": "6632104",
-                        }
-                    }
-                }
-            }
-        };
-
-        // DOM elements
-        const combinedFilterCardsContainer = document.getElementById('combined-filter-cards-container');
-        const combinedFilterCards = document.getElementById('combined-filter-cards');
-        const cccSelect = document.getElementById('ccc-select');
-        const probTypeCardsContainer = document.getElementById('prob-type-cards');
+        // Cache DOM elements
         const latestDocketDateElement = document.getElementById('latest-docket-date');
-        const noDataMessage = document.getElementById('no-data-message');
+        const regionSelect = document.getElementById('region-select');
+        const divisionSelect = document.getElementById('division-select');
+        const cccSelect = document.getElementById('ccc-select');
+        const ageFilter = document.getElementById('age-filter');
+        const tableSearch = document.getElementById('table-search');
         const loadingIndicator = document.getElementById('loading-indicator');
         const errorMessage = document.getElementById('error-message');
+        const probTypeCardsContainer = document.getElementById('region-summary-cards');
         const filterControlsContainer = document.getElementById('filter-controls-container');
-        // New DOM elements for region summary cards
-        const regionSummaryCardsContainer = document.getElementById('region-summary-cards');
-        const noRegionDataMessage = document.getElementById('no-region-data-message');
+        const noDataMessage = document.getElementById('no-data-message');
 
+        // Summary labels
+        const totalDocketsCountVal = document.getElementById('total-dockets-count');
+        const totalUniqueSubtitleVal = document.getElementById('total-unique-subtitle');
+        const techDocketsCountVal = document.getElementById('tech-dockets-count');
+        const overdueDocketsCountVal = document.getElementById('overdue-dockets-count');
+        const criticalDocketsCountVal = document.getElementById('critical-dockets-count');
 
-        // Helper to normalize names for regionData keys
-        function normalizeHierarchyName(name, type) {
-            if (!name) return null;
-            const upperName = name.toUpperCase().trim();
-            if (type === 'region') {
-                return upperName.endsWith(' REGION') ? upperName : upperName + ' REGION';
-            }
-            if (type === 'division') {
-                return upperName.endsWith(' DIVISION') ? upperName : upperName + ' DIVISION';
-            }
-            return upperName;
-        }
+        // State
+        let docketCallData = [];
+        let selectedRegion = "All";
+        let selectedDivision = "All";
+        let selectedCCC = "All";
+        let currentCCCdocketsForDownload = [];
+        let currentDetailDocketsForDownload = [];
+        let currentUser = MZO_AUTH.getUser();
 
-        // Current selections (moved up for global access)
-        let selectedRegion = null;
-        let selectedDivision = null;
-        let selectedCCC = null;
-
-        // RBAC: Authorized units for the current user
+        // RBAC state
         let userAuthorizedRegion = null;
         let userAuthorizedDivision = null;
         let userAuthorizedCCC = null;
 
-        /**
-         * Initializes filter state based on user permissions
-         */
-        function handleRBACPermissions() {
-            if (!currentUser || !currentUser.role) return;
-
-            const isAdmin = currentUser.role.toLowerCase() === 'admin';
-            console.log("Setting up RBAC permissions for user:", currentUser.Username, "isAdmin:", isAdmin);
-
-            if (isAdmin) return;
-
-            // Resolve authorized names via MZO_HIERARCHY
-            if (currentUser.division) {
-                userAuthorizedDivision = getDivisionNameByCode(currentUser.division);
-                if (userAuthorizedDivision) {
-                    userAuthorizedRegion = getRegionForDivision(userAuthorizedDivision);
-
-                    // Auto-select for UI filters
-                    selectedDivision = userAuthorizedDivision;
-                    selectedRegion = userAuthorizedRegion;
-                }
-            } else if (currentUser.region) {
-                userAuthorizedRegion = getRegionNameByCode(currentUser.region);
-                if (userAuthorizedRegion) {
-                    // Auto-select for UI filters
-                    selectedRegion = userAuthorizedRegion;
-                }
-            }
-
-            if (currentUser.ccc) {
-                userAuthorizedCCC = getCCCNameByCode(currentUser.ccc);
-                if (userAuthorizedCCC) {
-                    // Auto-select for UI filters
-                    selectedCCC = userAuthorizedCCC;
-
-                    // Resolve parents if not already set (e.g. for a pure CCC user)
-                    if (!userAuthorizedDivision || !userAuthorizedRegion) {
-                        const h = window.MZO_HIERARCHY.getFullHierarchy(currentUser.ccc);
-                        if (h) {
-                            if (!userAuthorizedDivision) userAuthorizedDivision = normalizeHierarchyName(h.division.name, 'division');
-                            if (!userAuthorizedRegion) userAuthorizedRegion = normalizeHierarchyName(h.region.name, 'region');
-
-                            selectedDivision = userAuthorizedDivision || selectedDivision;
-                            selectedRegion = userAuthorizedRegion || selectedRegion;
-                        }
-                    }
-                }
-            }
-
-            console.log("RBAC Authorized Scope:", { userAuthorizedRegion, userAuthorizedDivision, userAuthorizedCCC });
-            console.log("RBAC Initial UI State:", { selectedRegion, selectedDivision, selectedCCC });
-        }
-
-        /**
-         * Gets standardized region name from any code.
-         */
-        function getRegionNameByCode(code) {
-            if (!code) return null;
-            if (window.MZO_HIERARCHY && window.MZO_HIERARCHY.isLoaded()) {
-                const record = window.MZO_HIERARCHY.getRecordByCode(code);
-                if (record && record.region_name) {
-                    return normalizeHierarchyName(record.region_name, 'region');
-                }
-            }
-            // Fallback to regionData matching
-            for (const r in regionData) {
-                if (regionData[r].code === String(code)) return r;
-            }
-            return null;
-        }
-
-        /**
-         * Gets standardized division name from any code.
-         */
-        function getDivisionNameByCode(code) {
-            if (!code) return null;
-            if (window.MZO_HIERARCHY && window.MZO_HIERARCHY.isLoaded()) {
-                const record = window.MZO_HIERARCHY.getRecordByCode(code);
-                if (record && record.division_name) {
-                    return normalizeHierarchyName(record.division_name, 'division');
-                }
-            }
-            // Fallback to regionData matching
-            for (const r in regionData) {
-                for (const d in regionData[r].divisions) {
-                    if (regionData[r].divisions[d].code === String(code)) return d;
-                }
-            }
-            return null;
-        }
-
-        /**
-         * Gets standardized CCC name from any code.
-         */
-        function getCCCNameByCode(code) {
-            if (!code) return null;
-            if (window.MZO_HIERARCHY && window.MZO_HIERARCHY.isLoaded()) {
-                const record = window.MZO_HIERARCHY.getRecordByCode(code);
-                if (record && record.ccc_name) {
-                    let name = record.ccc_name.toUpperCase().trim();
-                    if (!name.endsWith(' CCC')) name += ' CCC';
-                    return name;
-                }
-            }
-            // Fallback to regionData
-            for (const r in regionData) {
-                for (const d in regionData[r].divisions) {
-                    for (const ccc in regionData[r].divisions[d].cccs) {
-                        if (regionData[r].divisions[d].cccs[ccc] === String(code)) return ccc;
-                    }
-                }
-            }
-            return null;
-        }
-
-        /**
-         * Gets the region name from a CCC code using the regionData mapping.
-         */
-        function getRegionByCCC(cccCode) {
-            const name = getRegionNameByCode(cccCode);
-            if (name) return name;
-
-            // Fallback
-            for (const regionName in regionData) {
-                const region = regionData[regionName];
-                for (const divisionName in region.divisions) {
-                    const division = region.divisions[divisionName];
-                    for (const cccName in division.cccs) {
-                        if (division.cccs[cccName] === cccCode) return regionName;
-                    }
-                }
-            }
-            return null;
-        }
-
-        /**
-         * Gets the parent region name for a given division name.
-         */
-        function getRegionForDivision(divisionName) {
-            for (const regionName in regionData) {
-                if (regionData[regionName].divisions[divisionName]) return regionName;
-            }
-            return null;
-        }
-
-        /**
-         * Gets the division name from a CCC code using the regionData mapping.
-         */
-        function getDivisionByCCC(cccCode) {
-            const name = getDivisionNameByCode(cccCode);
-            if (name) return name;
-
-            for (const regionName in regionData) {
-                for (const divisionName in regionData[regionName].divisions) {
-                    const division = regionData[regionName].divisions[divisionName];
-                    for (const cccName in division.cccs) {
-                        if (division.cccs[cccName] === cccCode) return divisionName;
-                    }
-                }
-            }
-            return null;
-        }
-
-
-        /**
-         * Converts a string to Proper Case.
-         * @param {string} str - The string to convert.
-         * @returns {string} The converted string.
-         */
-
         function toProperCase(str) {
-            if (!str) return '';
-            return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+            return str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
         }
 
-        /**
-         * Parses a date string "dd/mm/yyyy hh:mm:ss" into a Date object.
-         * @param {string} dateString - The date string to parse.
-         * @returns {Date} The parsed Date object.
-         */
-        function parseDateString(dateString) {
-            const [datePart, timePart] = dateString.split(' ');
-            const [day, month, year] = datePart.split('/').map(Number);
-            const [hours, minutes, seconds] = timePart.split(':').map(Number);
-            // Month is 0-indexed in JavaScript Date object
-            return new Date(year, month - 1, day, hours, minutes, seconds);
-        }
-
-        /**
-         * Formats a Date object into "dd/mm/yyyy hh:mm:ss" string.
-         * @param {Date} date - The Date object to format.
-         * @returns {string} The formatted date string.
-         */
-        function formatDate(date) {
-            if (!date) return '';
-            const pad = (num) => num.toString().padStart(2, '0');
-            const day = pad(date.getDate());
-            const month = pad(date.getMonth() + 1);
-            const year = date.getFullYear();
-            const hours = pad(date.getHours());
-            const minutes = pad(date.getMinutes());
-            const seconds = pad(date.getSeconds());
-            return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
-        }
-
-        /**
-         * Fetches and parses CSV data from the given URL.
-         * @param {string} url - The URL of the CSV data.
-         * @returns {Promise<Array>} A promise that resolves with the parsed data.
-         */
         async function fetchCsvData(url) {
             loadingIndicator.style.display = 'block';
-            errorMessage.style.display = 'none';
-            filterControlsContainer.style.display = 'none';
-            probTypeCardsContainer.style.display = 'none';
-            regionSummaryCardsContainer.style.display = 'none'; // Hide region summary on load
-
             try {
                 const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
                 const csvText = await response.text();
-                return parseCsv(csvText);
+                const results = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+                return results.data;
             } catch (error) {
-                console.error("Error fetching or parsing CSV:", error);
-                errorMessage.style.display = 'block';
-                return []; // Return empty array on error
+                console.error("Error fetching CSV:", error);
+                throw error;
             } finally {
                 loadingIndicator.style.display = 'none';
             }
         }
 
-        /**
-         * Parses CSV text into an array of objects, handling commas within double quotes.
-         * Assumes the first row is the header.
-         * @param {string} csvText - The CSV data as a string.
-         * @returns {Array} An array of objects.
-         */
-        function parseCsv(csvText) {
-            const lines = csvText.trim().split('\n');
-            if (lines.length === 0) return [];
-
-            const headers = lines[0].split(',').map(header => header.trim());
-            const data = [];
-
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i];
-                const values = [];
-                let inQuote = false;
-                let currentField = '';
-
-                for (let j = 0; j < line.length; j++) {
-                    const char = line[j];
-                    if (char === '"') {
-                        // Handle escaped quotes within a quoted field (e.g., "abc""def")
-                        if (inQuote && line[j + 1] === '"') {
-                            currentField += '"';
-                            j++; // Skip the next quote as it's an escape
-                        } else {
-                            inQuote = !inQuote;
-                        }
-                    } else if (char === ',' && !inQuote) {
-                        values.push(currentField);
-                        currentField = '';
-                    } else {
-                        currentField += char;
-                    }
-                }
-                values.push(currentField); // Add the last field
-
-                // Trim all values after parsing
-                const trimmedValues = values.map(val => val.trim());
-
-                if (trimmedValues.length !== headers.length) {
-                    console.warn(`Skipping malformed row due to incorrect number of fields: ${line}`);
-                    console.warn(`Expected ${headers.length} fields, got ${trimmedValues.length} fields.`);
-                    console.warn(`Headers: ${headers}`);
-                    console.warn(`Parsed Values: ${trimmedValues}`);
-                    continue;
-                }
-
-                const row = {};
-                headers.forEach((header, index) => {
-                    row[header] = trimmedValues[index];
-                });
-                data.push(row);
+        function parseDateString(dateStr) {
+            if (!dateStr) return new Date(0);
+            if (dateStr.includes('/')) {
+                const [d, m, y_part] = dateStr.split('/');
+                const [y, t] = y_part.split(' ');
+                return new Date(`${y}-${m}-${d}T${t || '00:00:00'}`);
             }
-            return data;
+            return new Date(dateStr);
         }
 
-        /**
-         * Filters the docket data based on selected region, division, and CCC, 
-         * while strictly enforcing RBAC authorized scope.
-         * @returns {Array} The filtered data.
-         */
+        function formatDate(date) {
+            if (!date || isNaN(date.getTime())) return "N/A";
+            return date.toLocaleString('en-IN', {
+                day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', hour12: true
+            });
+        }
+
         function getFilteredData() {
             let filtered = docketCallData;
-            console.log("--- Filtering Process Started ---");
 
-            // --- Baseline RBAC Guard: Strictly filter by authorized scope first ---
-            if (userAuthorizedRegion) {
-                filtered = filtered.filter(d => d.resolvedRegion === userAuthorizedRegion);
-            }
-            if (userAuthorizedDivision) {
-                filtered = filtered.filter(d => d.resolvedDivision === userAuthorizedDivision);
-            }
-            if (userAuthorizedCCC) {
-                const targetCccCode = getCCCCodeFromName(userAuthorizedCCC);
-                if (targetCccCode) {
-                    filtered = filtered.filter(d => d.ccc_code === targetCccCode);
-                }
-            }
-            console.log("After baseline RBAC filtering:", filtered.length);
+            // RBAC Baseline
+            if (userAuthorizedRegion) filtered = filtered.filter(d => d.resolvedRegion === userAuthorizedRegion);
+            if (userAuthorizedDivision) filtered = filtered.filter(d => d.resolvedDivision === userAuthorizedDivision);
+            if (userAuthorizedCCC) filtered = filtered.filter(d => d.ccc_code === userAuthorizedCCC);
 
-            // --- User UI Selections: Further filter based on active UI selections ---
-            // If user has access to multiple regions (Admin or no restriction), filter by selection
-            if (!userAuthorizedRegion && selectedRegion && selectedRegion !== "All") {
-                filtered = filtered.filter(d => d.resolvedRegion === selectedRegion);
+            // UI Selections
+            if (selectedRegion !== "All" && !userAuthorizedRegion) filtered = filtered.filter(d => d.resolvedRegion === selectedRegion);
+            if (selectedDivision !== "All" && !userAuthorizedDivision) filtered = filtered.filter(d => d.resolvedDivision === selectedDivision);
+            if (selectedCCC !== "All") filtered = filtered.filter(d => d.ccc_code === selectedCCC);
+
+            // Tech/Non-Tech Toggle
+            const showTech = document.getElementById('technical-checkbox').checked;
+            const showNonTech = document.getElementById('nontechnical-checkbox').checked;
+            filtered = filtered.filter(d => {
+                const isTech = TECHNICAL_PROB_TYPES.includes(d.prob_type?.trim());
+                return (isTech && showTech) || (!isTech && showNonTech);
+            });
+
+            // Age Filter
+            const ageVal = ageFilter.value;
+            const now = new Date();
+            filtered = filtered.filter(d => {
+                const dt = parseDateString(d.doc_crn_dt);
+                const diffHrs = (now - dt) / (1000 * 60 * 60);
+                if (ageVal === "today") return dt.toDateString() === now.toDateString();
+                if (ageVal === "24h") return diffHrs >= 24;
+                if (ageVal === "48h") return diffHrs >= 48;
+                if (ageVal === "3d") return diffHrs >= 72;
+                return true;
+            });
+
+            // Search Filter
+            const term = tableSearch.value.toLowerCase();
+            if (term) {
+                filtered = filtered.filter(d =>
+                    d.con_id?.toLowerCase().includes(term) ||
+                    d.PARTY_NAME?.toLowerCase().includes(term) ||
+                    d.doc_no?.toLowerCase().includes(term)
+                );
             }
 
-            // If user has access to multiple divisions (Admin or Region scope), filter by selection
-            if (!userAuthorizedDivision && selectedDivision && selectedDivision !== "All") {
-                filtered = filtered.filter(d => d.resolvedDivision === selectedDivision);
-            }
-
-            // Filter by CCC UI selection
-            if (selectedCCC && selectedCCC !== "All") {
-                const targetCccCode = getCCCCodeFromName(selectedCCC, selectedRegion, selectedDivision);
-                if (targetCccCode) {
-                    filtered = filtered.filter(d => d.ccc_code === targetCccCode);
-                }
-            }
-
-            console.log("--- Filtering Process End. Final length:", filtered.length, "---");
             return filtered;
         }
 
-        // Helper to get CCC code from name, optionally scoped by region/division
-        function getCCCCodeFromName(cccName, regionName, divisionName) {
-            if (!cccName) return null;
+        function updateDashboard() {
+            const data = getFilteredData();
 
-            // If region and division are provided, search specifically in them
-            if (regionName && divisionName && regionData[regionName]?.divisions[divisionName]) {
-                return regionData[regionName].divisions[divisionName].cccs[cccName];
-            }
+            // Update Summary Cards
+            totalDocketsCountVal.textContent = data.length;
+            const uniqueCons = new Set(data.map(d => d.con_id).filter(Boolean)).size;
+            totalUniqueSubtitleVal.textContent = `${uniqueCons} Unique Consumers`;
 
-            // Otherwise search everything in regionData
-            for (const r in regionData) {
-                for (const d in regionData[r].divisions) {
-                    if (regionData[r].divisions[d].cccs[cccName]) {
-                        return regionData[r].divisions[d].cccs[cccName];
-                    }
-                }
-            }
-            return null;
+            const techCount = data.filter(d => TECHNICAL_PROB_TYPES.includes(d.prob_type?.trim())).length;
+            techDocketsCountVal.textContent = techCount;
+
+            const overdueCount = data.filter(d => (new Date() - parseDateString(d.doc_crn_dt)) / 3600000 >= 24).length;
+            overdueDocketsCountVal.textContent = overdueCount;
+
+            const criticalCount = data.filter(d => CRITICAL_TYPES.includes(d.prob_type?.trim())).length;
+            criticalDocketsCountVal.textContent = criticalCount;
+
+            renderProblemAnalysisCards(data);
+            updateLatestDateDisplay(getLatestDocketDate(data));
+
+            noDataMessage.style.display = data.length === 0 ? 'block' : 'none';
         }
 
-        /**
-         * Calculates the counts of each problem type in the given data.
-         * @param {Array} data - The data to count problem types from.
-         * @returns {Object} An object where keys are prob_type and values are their counts.
-         */
-        function getProbTypeCounts(data) {
-            const counts = {};
-            data.forEach(item => {
-                if (item.prob_type) { // Ensure prob_type exists
-                    counts[item.prob_type] = (counts[item.prob_type] || 0) + 1;
-                }
-            });
-            return counts;
-        }
-
-        /**
-         * Finds the latest docket creation date from the given data.
-         * @param {Array} data - The data to find the latest date from.
-         * @returns {Date | null} The latest Date object, or null if no data.
-         */
         function getLatestDocketDate(data) {
             if (data.length === 0) return null;
-
-            let latestDate = null;
-            data.forEach(item => {
-                if (item.doc_crn_dt) { // Ensure doc_crn_dt exists
-                    const currentDate = parseDateString(item.doc_crn_dt);
-                    if (!latestDate || currentDate > latestDate) {
-                        latestDate = currentDate;
-                    }
-                }
+            let latest = null;
+            data.forEach(d => {
+                const dt = parseDateString(d.doc_crn_dt);
+                if (isNaN(dt.getTime())) return;
+                if (!latest || dt > latest) latest = dt;
             });
-            return latestDate;
+            return latest;
         }
 
-        /**
-         * Renders the problem type cards based on the counts.
-         * @param {Object} counts - An object with prob_type counts.
-         */
-        function renderProbTypeCards(counts) {
+        function updateLatestDateDisplay(date) {
+            latestDocketDateElement.textContent = date ? formatDate(date) : "N/A";
+        }
+
+        function renderProblemAnalysisCards(data) {
             probTypeCardsContainer.innerHTML = '';
 
-            let currentFilteredData = getFilteredData();
-            currentFilteredData = filterByDescriptionType(currentFilteredData);
-            currentFilteredData = filterByAge(currentFilteredData);
-
-            const probTypeCounts = getProbTypeCounts(currentFilteredData);
-
-            const technicalTypes = [];
-            const nonTechnicalTypes = [];
-
-            Object.keys(probTypeCounts).forEach(type => {
-                const isTechnical = TECHNICAL_PROB_TYPES.includes(type);
-                if (isTechnical) {
-                    technicalTypes.push(type);
-                } else {
-                    nonTechnicalTypes.push(type);
-                }
+            // Group by problem type
+            const counts = {};
+            data.forEach(d => {
+                const type = d.prob_type?.trim() || "Unknown";
+                counts[type] = (counts[type] || 0) + 1;
             });
 
-            technicalTypes.sort((a, b) => (TECHNICAL_PRIORITY[a] ?? 999) - (TECHNICAL_PRIORITY[b] ?? 999));
-            nonTechnicalTypes.sort();
+            const sortedTypes = Object.keys(counts).sort((a, b) => (TECHNICAL_PRIORITY[a] || 999) - (TECHNICAL_PRIORITY[b] || 999));
 
-            const orderedTypes = [...technicalTypes, ...nonTechnicalTypes];
+            sortedTypes.forEach(type => {
+                const count = counts[type];
+                const isTech = TECHNICAL_PROB_TYPES.includes(type);
+                const col = document.createElement('div');
+                col.className = 'col-md-3 col-sm-6';
+                col.innerHTML = `
+                    <div class="summary-card pointer" onclick="showProblemDetails('${type.replace(/'/g, "\\'")}')">
+                        <div class="summary-title text-truncate" title="${type}">${type}</div>
+                        <div class="d-flex align-items-baseline gap-2">
+                            <div class="summary-value">${count}</div>
+                            <span class="prob-badge ${isTech ? 'bg-tech' : 'bg-non-tech'}">${isTech ? 'TECH' : 'NT'}</span>
+                        </div>
+                    </div>
+                `;
+                probTypeCardsContainer.appendChild(col);
+            });
+        }
 
-            if (orderedTypes.length === 0) {
-                noDataMessage.classList.remove('hidden');
-                noDataMessage.style.display = 'block';
-            } else {
-                noDataMessage.classList.add('hidden');
-                noDataMessage.style.display = 'none';
-            }
+        function showProblemDetails(type) {
+            const data = getFilteredData().filter(d => d.prob_type?.trim() === type);
+            const modalTitleLabel = document.getElementById('modalTitle');
+            modalTitleLabel.textContent = `Analysis: ${type}`;
 
-            orderedTypes.forEach(type => {
-                const totalCount = probTypeCounts[type];
-                const uniqueConIds = new Set();
-                currentFilteredData.filter(d => d.prob_type?.trim() === type)
-                    .forEach(d => {
-                        if (d.con_id) {
-                            uniqueConIds.add(d.con_id);
-                        }
-                    });
-                const uniqueConIdCount = uniqueConIds.size;
+            const tabContainer = document.getElementById('ccc-tab-container');
+            tabContainer.innerHTML = '';
 
-                const isTechnical = TECHNICAL_PROB_TYPES.includes(type);
+            // Group by CCC
+            const grouped = {};
+            data.forEach(d => {
+                const name = window.MZO_HIERARCHY.getCCCName(d.ccc_code) || d.ccc_code;
+                if (!grouped[name]) grouped[name] = [];
+                grouped[name].push(d);
+            });
 
-                const card = document.createElement('div');
-                card.className = 'prob-type-card';
-                // Now directly call showProblemTypeDetailsModal with all relevant dockets for this problem type
-                card.onclick = () => {
-                    const docketsForProblemType = currentFilteredData.filter(d => d.prob_type?.trim() === type);
-                    window.lastModalProblemType = type; // Store for age filter re-application
-                    showProblemTypeDetailsModal(type, docketsForProblemType);
+            const cccNames = Object.keys(grouped).sort();
+            cccNames.forEach((name, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `btn btn-sm me-2 ${idx === 0 ? 'btn-primary' : 'btn-outline-primary'}`;
+                btn.textContent = `${name} (${grouped[name].length})`;
+                btn.onclick = () => {
+                    tabContainer.querySelectorAll('button').forEach(b => b.className = 'btn btn-sm btn-outline-primary me-2');
+                    btn.className = 'btn btn-sm btn-primary me-2';
+                    renderDocketTable(grouped[name]);
                 };
-
-                // Add classes for styling
-                if (isTechnical) {
-                    card.classList.add('technical');
-                } else {
-                    card.classList.add('non-technical');
-                }
-
-                // Special highlight for "Conductor snap" - this will override the styles above
-                if (type === "Conductor snap") {
-                    card.classList.add('conductor-snap-alert');
-                }
-
-                // Removed cccLine from innerHTML
-                card.innerHTML = `
-            <div>
-                <h3 class="prob-type-card-title">${type}</h3>
-            </div>
-            <p class="prob-type-card-count">
-                ${totalCount} <span class="prob-type-card-unique-conid-count">(${uniqueConIdCount} unique)</span>
-            </p>
-        `;
-
-                probTypeCardsContainer.appendChild(card);
+                tabContainer.appendChild(btn);
             });
-        }
-        function shortenName(name) {
-            if (!name) return '';
-            const words = name.trim().split(/\s+/); // Split by whitespace
-            return words.slice(0, 2).join(' ') + (words.length > 2 ? '...' : '');
+
+            if (cccNames.length > 0) renderDocketTable(grouped[cccNames[0]]);
+            b5DocketListModal.show();
         }
 
-        /**
-         * Renders the docket table for a given list of dockets.
-         * @param {Array} dockets - The list of docket items to display.
-         * @param {Map} conIdCounts - Map of Con ID counts for highlighting duplicates.
-         * @param {Array} allDocketsInCurrentTab - All dockets currently in the active CCC tab.
-         * @returns {string} HTML string of the table body.
-         */
-        function renderDocketTable(dockets, conIdCounts, allDocketsInCurrentTab) {
+        function renderDocketTable(dockets) {
+            currentCCCdocketsForDownload = dockets;
+            const container = document.getElementById('modalContent');
+
             if (dockets.length === 0) {
-                return `<p style="text-align: center; color: #a0aec0;">No data available for this CCC.</p>`;
-            }
-
-            return `
-        <div style="overflow-x: auto;">
-          <table class="modal-table">
-            <thead>
-              <tr>
-                <th>Doc No</th>
-                <th>Con ID</th>
-                <th>Party</th>
-                <th>Mobile</th>
-                <th>Since</th>
-              </tr>
-            </thead>
-            <tbody>
-${dockets
-                    .map(d => {
-                        const since = getTimeDifference(d.doc_crn_dt);
-                        const rowClass = (d.con_id && conIdCounts.get(d.con_id) > 1) ? 'duplicate-row' : '';
-                        // Pass allDocketsInCurrentTab to showDocketDetail
-                        return `
-      <tr class="${rowClass}" onclick='showDocketDetail(${JSON.stringify(d).replace(/'/g, "\\'")}, ${JSON.stringify(allDocketsInCurrentTab).replace(/'/g, "\\'")})'>
-        <td>${d.doc_no}</td>
-        <td>${d.con_id}</td>
-        <td>${shortenName(d.PARTY_NAME)}</td>
-        <td>${d.Mob_No}</td>
-        <td>${since}</td>
-      </tr>`;
-                    }).join('')}
-            </tbody>
-          </table>
-        </div>
-    `;
-        }
-
-        /**
-         * Opens a modal showing a CCC-wise list of dockets for a given problem type, with tabs.
-         * This function replaces the previous showCCCWiseSummaryModal and showDocketListModal combination.
-         * @param {string} probType - The problem type selected.
-         * @param {Array} allDocketsForProbType - All docket data filtered for this problem type.
-         */
-        function showProblemTypeDetailsModal(probType, allDocketsForProbType) {
-            const modal = document.getElementById("docket-list-modal"); // Use the existing docket-list-modal
-            const content = document.getElementById("modal-content");
-            const modalTitle = document.getElementById("modal-title");
-
-            modalTitle.textContent = `Docket Details — ${probType}`;
-
-            // Group dockets by CCC
-            const cccGroupedDockets = {};
-            allDocketsForProbType.forEach(docket => {
-                const cccName = getCCCNameByCode(docket.ccc_code);
-                if (cccName) {
-                    if (!cccGroupedDockets[cccName]) {
-                        cccGroupedDockets[cccName] = [];
-                    }
-                    cccGroupedDockets[cccName].push(docket);
-                }
-            });
-
-            const sortedCCCs = Object.keys(cccGroupedDockets).sort();
-
-            if (sortedCCCs.length === 0) {
-                content.innerHTML = `<p style="text-align: center; color: #a0aec0;">No CCC data available for this problem type.</p>`;
-                modal.style.display = "flex";
-                // Clear global data for download if no data
-                currentCCCdocketsForDownload = [];
+                container.innerHTML = '<div class="text-center p-4 text-muted">No records available</div>';
                 return;
             }
 
-            let tabsHtml = '<div class="ccc-tabs">';
-            let tabContentsHtml = '<div id="ccc-tab-content-container">'; // Container for actual table content
-
-            sortedCCCs.forEach((cccName, index) => {
-                const isActive = index === 0 ? 'active' : '';
-                const docketsInCCC = cccGroupedDockets[cccName];
-                const uniqueConIds = new Set(docketsInCCC.map(d => d.con_id).filter(Boolean));
-
-                // Updated to show count in the tab label: "CCC Name (Total / Unique)"
-                tabsHtml += `<button class="ccc-tab-button ${isActive}" data-ccc="${cccName}">
-                        ${cccName.replace(' CCC', '')} (${docketsInCCC.length} / ${uniqueConIds.size})
-                     </button>`;
-            });
-            tabsHtml += '</div>';
-
-            content.innerHTML = tabsHtml + '<div id="current-ccc-docket-table-container"></div>'; // Placeholder for the table
-
-            const currentCCCDocketTableContainer = document.getElementById('current-ccc-docket-table-container');
-
-            // Function to render the table for a specific CCC
-            const renderCurrentCCCTable = (cccName) => {
-                const dockets = cccGroupedDockets[cccName];
-                const conIdCounts = new Map();
-                dockets.forEach(d => {
-                    if (d.con_id) {
-                        conIdCounts.set(d.con_id, (conIdCounts.get(d.con_id) || 0) + 1);
-                    }
-                });
-                // Update global data for download
-                currentCCCdocketsForDownload = dockets;
-                // Pass the dockets for the current tab to renderDocketTable
-                currentCCCDocketTableContainer.innerHTML = renderDocketTable(dockets, conIdCounts, dockets);
-            };
-
-            // Add event listeners for tabs
-            content.querySelectorAll('.ccc-tab-button').forEach(button => {
-                button.addEventListener('click', (event) => {
-                    content.querySelectorAll('.ccc-tab-button').forEach(btn => btn.classList.remove('active'));
-                    event.target.classList.add('active');
-
-                    const targetCCC = event.target.dataset.ccc;
-                    renderCurrentCCCTable(targetCCC);
-                });
-            });
-
-            // Activate the first tab and render its content initially
-            if (sortedCCCs.length > 0) {
-                content.querySelector('.ccc-tab-button.active').click(); // Simulate click on first tab
-            }
-
-            modal.style.display = "flex";
+            container.innerHTML = `
+                <div class="table-responsive">
+                    <table class="table table-hover table-docket align-middle">
+                        <thead>
+                            <tr>
+                                <th>Doc No</th>
+                                <th>Con ID</th>
+                                <th>Consumer Name</th>
+                                <th>Since</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${dockets.map(d => `
+                                <tr onclick="showDocketDetail('${d.doc_no}')">
+                                    <td class="fw-600 text-primary">${d.doc_no}</td>
+                                    <td class="fw-500">${d.con_id || '-'}</td>
+                                    <td>${d.PARTY_NAME || 'Unknown'}</td>
+                                    <td><span class="badge bg-light text-dark border">${getTimeDifference(d.doc_crn_dt)}</span></td>
+                                    <td><button class="btn btn-xs btn-outline-primary"><i class="fas fa-eye"></i></button></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
         }
 
-        function closeProblemTypeDetailsModal() { // Renamed from closeDocketListModal
-            document.getElementById("docket-list-modal").style.display = "none";
-            currentCCCdocketsForDownload = []; // Clear data when modal closes
-        }
-
-
-        function getTimeDifference(docDateStr) {
-            const parsed = parseDateString(docDateStr);
-            const now = new Date();
-            const diffMs = now - parsed;
-            const mins = Math.floor(diffMs / 60000);
+        function getTimeDifference(dateStr) {
+            const parsed = parseDateString(dateStr);
+            if (isNaN(parsed.getTime())) return "-";
+            const diff = new Date() - parsed;
+            const mins = Math.floor(diff / 60000);
             const hrs = Math.floor(mins / 60);
             const days = Math.floor(hrs / 24);
-            return `${days}D ${hrs % 24}H ${mins % 60}M`;
+            if (days > 0) return `${days}d ${hrs % 24}h`;
+            if (hrs > 0) return `${hrs}h ${mins % 60}m`;
+            return `${mins}m`;
         }
 
-        /**
-         * Updates the latest docket date displayed on the dashboard.
-         * @param {Date | null} date - The latest Date object.
-         */
-        function updateLatestDateDisplay(date) {
-            if (date) {
-                latestDocketDateElement.textContent = formatDate(date);
-                latestDocketDateElement.classList.add('live-date-animation'); // Ensure animation class is present
+        function showDocketDetail(docNo) {
+            const docket = docketCallData.find(d => d.doc_no === docNo);
+            if (!docket) return;
+
+            currentDetailDocketsForDownload = [docket];
+            const content = document.getElementById('docketDetailContent');
+            content.innerHTML = `
+                <table class="table table-sm mb-0">
+                    <tbody class="small">
+                        <tr><td class="bg-light fw-600 w-25">Docket No</td><td>${docket.doc_no}</td></tr>
+                        <tr><td class="bg-light fw-600">Created On</td><td>${formatDate(parseDateString(docket.doc_crn_dt))}</td></tr>
+                        <tr><td class="bg-light fw-600">Consumer ID</td><td>${docket.con_id || '-'}</td></tr>
+                        <tr><td class="bg-light fw-600">Party Name</td><td>${docket.PARTY_NAME || '-'}</td></tr>
+                        <tr><td class="bg-light fw-600">Mobile</td><td>${docket.Mob_No || '-'}</td></tr>
+                        <tr><td class="bg-light fw-600">Address</td><td>${docket.addr || '-'}</td></tr>
+                        <tr><td class="bg-light fw-600">Problem</td><td>${docket.prob_type || '-'}</td></tr>
+                        <tr><td class="bg-light fw-600">CCC</td><td>${window.MZO_HIERARCHY.getCCCName(docket.ccc_code)}</td></tr>
+                    </tbody>
+                </table>
+            `;
+            b5DocketDetailModal.show();
+        }
+
+        function handleRBACPermissions() {
+            if (!currentUser) return;
+
+            const role = currentUser.role?.toLowerCase();
+            if (role === 'admin') return;
+
+            // Use correct property names from auth_system.js: region, division, ccc
+            if (currentUser.division) {
+                // Resolve name from code to ensure exact match with hierarchy data
+                userAuthorizedDivision = window.MZO_HIERARCHY.getDivisionName(currentUser.division);
+                const h = window.MZO_HIERARCHY.getRecordByCode(currentUser.division);
+                if (h) userAuthorizedRegion = h.region_name;
+            } else if (currentUser.region) {
+                userAuthorizedRegion = window.MZO_HIERARCHY.getRegionName(currentUser.region);
+            }
+
+            if (currentUser.ccc) userAuthorizedCCC = currentUser.ccc;
+
+            // Apply restrictions to UI
+            if (userAuthorizedRegion) {
+                regionSelect.innerHTML = `<option value="${userAuthorizedRegion}">${userAuthorizedRegion}</option>`;
+                regionSelect.disabled = true;
+                selectedRegion = userAuthorizedRegion;
+            }
+            if (userAuthorizedDivision) {
+                divisionSelect.innerHTML = `<option value="${userAuthorizedDivision}">${userAuthorizedDivision}</option>`;
+                divisionSelect.disabled = true;
+                selectedDivision = userAuthorizedDivision;
+            }
+            if (userAuthorizedCCC) {
+                const cccName = window.MZO_HIERARCHY.getCCCName(userAuthorizedCCC);
+                cccSelect.innerHTML = `<option value="${userAuthorizedCCC}">${cccName}</option>`;
+                cccSelect.disabled = true;
+                selectedCCC = userAuthorizedCCC;
+            }
+        }
+
+        function populateInitialDropdowns() {
+            if (!userAuthorizedRegion) {
+                const regions = window.MZO_HIERARCHY.getAllRegions();
+                regionSelect.innerHTML = '<option value="All">All Regions</option>';
+                regions.forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.name;
+                    opt.textContent = r.name;
+                    regionSelect.appendChild(opt);
+                });
+            }
+
+            updateDivisionDropdown();
+            updateCCCDropdown();
+        }
+
+        function updateDivisionDropdown() {
+            if (userAuthorizedDivision) return;
+
+            divisionSelect.innerHTML = '<option value="All">All Divisions</option>';
+            if (selectedRegion === "All") {
+                divisionSelect.disabled = true;
             } else {
-                latestDocketDateElement.textContent = 'N/A';
-                latestDocketDateElement.classList.remove('live-date-animation');
+                divisionSelect.disabled = false;
+                const rec = window.MZO_HIERARCHY.getAllRegions().find(r => r.name === selectedRegion);
+                const divisions = window.MZO_HIERARCHY.getDivisionsByRegion(rec?.code);
+                divisions.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.name;
+                    opt.textContent = d.name;
+                    divisionSelect.appendChild(opt);
+                });
             }
         }
 
-        /**
-         * Populates a select element with options.
-         * @param {HTMLSelectElement} selectElement - The select element to populate.
-         * @param {Array<string>} optionsArray - An array of option values.
-         * @param {string} selectedValue - The currently selected value.
-         * @param {string} defaultText - The text for the default "All" option.
-         */
-        function populateSelect(selectElement, optionsArray, selectedValue, defaultText) {
-            selectElement.innerHTML = ''; // Clear existing options
-            const allOption = document.createElement('option');
-            allOption.value = "All";
-            allOption.textContent = defaultText;
-            selectElement.appendChild(allOption);
+        function updateCCCDropdown() {
+            if (userAuthorizedCCC) return;
 
-            optionsArray.sort().forEach(optionValue => {
-                const option = document.createElement('option');
-                option.value = optionValue;
-                option.textContent = optionValue;
-                if (optionValue === selectedValue) {
-                    option.selected = true;
-                }
-                selectElement.appendChild(option);
-            });
-            selectElement.value = selectedValue || "All"; // Set selected value or default to "All"
-        }
-
-        function renderCombinedFilterCards() {
-            combinedFilterCards.innerHTML = ''; // Clear existing cards
-
-            // --- RBAC: Determine user's authorized hierarchy ---
-            let userAuthorizedRegion = null;
-            let userAuthorizedDivision = null;
-            let isAdmin = false;
-
-            if (currentUser) {
-                isAdmin = currentUser.role && currentUser.role.toLowerCase() === 'admin';
-
-                if (!isAdmin) {
-                    // If user has division_code, find the region and division names
-                    if (currentUser.division) {
-                        userAuthorizedDivision = getDivisionNameByCode(currentUser.division);
-                        if (userAuthorizedDivision) {
-                            userAuthorizedRegion = getRegionForDivision(userAuthorizedDivision);
-                        }
-                    }
-                    // If user has only region_code, find the region name
-                    else if (currentUser.region) {
-                        userAuthorizedRegion = getRegionNameByCode(currentUser.region);
-                    }
-                }
-            }
-            // --- End RBAC setup ---
-
-            // Create cards for all regions and their divisions from the static regionData
-            for (const regionName in regionData) {
-                // Create a group container for this region and its divisions
-                const groupContainer = document.createElement('div');
-                groupContainer.className = 'filter-region-group';
-
-                // Region Card
-                const regionCard = document.createElement('div');
-                regionCard.className = 'filter-card region';
-                regionCard.textContent = toProperCase(regionName.replace(' REGION', ''));
-                regionCard.dataset.value = regionName;
-                regionCard.dataset.type = 'region';
-
-                // RBAC: Disable region if user doesn't have access
-                const hasRegionAccess = isAdmin || !userAuthorizedRegion || userAuthorizedRegion === regionName;
-                if (!hasRegionAccess) {
-                    regionCard.classList.add('disabled');
-                    regionCard.style.pointerEvents = 'none';
-                    regionCard.style.opacity = '0.4';
-                }
-
-                if (selectedRegion === regionName && !selectedDivision) {
-                    regionCard.classList.add('active');
-                }
-                groupContainer.appendChild(regionCard);
-
-                // Division Cards for this Region
-                const divisions = regionData[regionName].divisions;
-                for (const divisionName in divisions) {
-                    const divisionCard = document.createElement('div');
-                    divisionCard.className = 'filter-card division';
-                    divisionCard.textContent = toProperCase(divisionName.replace(' DIVISION', ''));
-                    divisionCard.dataset.value = divisionName;
-                    divisionCard.dataset.type = 'division';
-
-                    // RBAC: Disable division if user doesn't have access
-                    const hasDivisionAccess = isAdmin ||
-                        !userAuthorizedDivision ||
-                        userAuthorizedDivision === divisionName ||
-                        (userAuthorizedRegion === regionName && !userAuthorizedDivision);
-
-                    if (!hasDivisionAccess) {
-                        divisionCard.classList.add('disabled');
-                        divisionCard.style.pointerEvents = 'none';
-                        divisionCard.style.opacity = '0.4';
-                    }
-
-                    // Check if this division should be active or inactive
-                    if (selectedDivision === divisionName) { // This division is the active one
-                        divisionCard.classList.add('active');
-                    } else if (selectedRegion && selectedRegion !== regionName) {
-                        // A region is selected, and it's NOT this card's parent region
-                        divisionCard.classList.add('inactive');
-                    }
-                    groupContainer.appendChild(divisionCard);
-
-                }
-                combinedFilterCards.appendChild(groupContainer);
-            }
-
-            combinedFilterCardsContainer.style.display = 'block';
-        }
-
-
-        function renderCccFilter() {
-            const showCccFilter = !!selectedDivision; // Show if a division is selected
-            filterControlsContainer.style.display = showCccFilter ? 'flex' : 'none';
-
-            if (!showCccFilter) {
-                cccSelect.innerHTML = '';
-                return;
-            }
-
-            const cccsInUse = new Set();
-            // Use selectedRegion and selectedDivision which are set when a division card is clicked
-            if (selectedRegion && selectedDivision) {
-                const cccsForDivision = regionData[selectedRegion]?.divisions[selectedDivision]?.cccs;
-                if (cccsForDivision) {
-                    for (const cccName in cccsForDivision) {
-                        const cccCode = cccsForDivision[cccName];
-                        if (docketCallData.some(d => d.ccc_code === cccCode)) {
-                            cccsInUse.add(cccName);
-                        }
-                    }
-                }
-            }
-
-            // --- RBAC: Filter CCCs if user has specific CCC code ---
-            let cccsToShow = Array.from(cccsInUse);
-            if (currentUser && currentUser.ccc && currentUser.role && currentUser.role.toLowerCase() !== 'admin') {
-                // Use robust resolver to find CCC name
-                const userCccName = getCCCNameByCode(currentUser.ccc);
-
-                // If we found the user's CCC in this division, show only that CCC
-                if (userCccName && cccsInUse.has(userCccName)) {
-                    cccsToShow = [userCccName];
-                    selectedCCC = userCccName; // Auto-select the user's CCC
-                }
-            }
-            // --- End RBAC ---
-
-            populateSelect(cccSelect, cccsToShow, selectedCCC, "All CCCs");
-
-        }
-
-        /**
-         * Gets the region name from a CCC code using the regionData mapping.
-         * @param {string} cccCode - The CCC code from the data.
-         * @returns {string|null} The region name or null if not found.
-         */
-        function getRegionByCCC(cccCode) {
-            for (const regionName in regionData) {
-                const region = regionData[regionName];
-                for (const divisionName in region.divisions) {
-                    const division = region.divisions[divisionName];
-                    for (const cccName in division.cccs) {
-                        if (division.cccs[cccName] === cccCode) {
-                            return regionName;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
-
-        /**
-         * Gets the parent region name for a given division name.
-         * @param {string} divisionName - The name of the division.
-         * @returns {string|null} The region name or null if not found.
-         */
-        function getRegionForDivision(divisionName) {
-            for (const regionName in regionData) {
-                if (regionData[regionName].divisions[divisionName]) {
-                    return regionName;
-                }
-            }
-            return null;
-        }
-        /**
-         * Gets the division name from a CCC code using the regionData mapping.
-         * @param {string} cccCode - The CCC code from the data.
-         * @returns {string|null} The division name or null if not found.
-         */
-        function getDivisionByCCC(cccCode) {
-            for (const regionName in regionData) {
-                for (const divisionName in regionData[regionName].divisions) {
-                    const division = regionData[regionName].divisions[divisionName];
-                    for (const cccName in division.cccs) {
-                        if (division.cccs[cccName] === cccCode) {
-                            return divisionName;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
-
-        // Description Type Filters
-        function filterByDescriptionType(data) {
-            const showTechnical = document.getElementById('technical-checkbox').checked;
-            const showNonTechnical = document.getElementById('nontechnical-checkbox').checked;
-
-            if (!showTechnical && !showNonTechnical) {
-                return []; // If neither is checked, return empty
-            }
-
-            return data.filter(item => {
-                const isTechnicalProbType = TECHNICAL_PROB_TYPES.includes(item.prob_type?.trim());
-                return (isTechnicalProbType && showTechnical) || (!isTechnicalProbType && showNonTechnical);
-            });
-        }
-
-        // Attach change events
-        document.getElementById('technical-checkbox').addEventListener('change', updateDashboard);
-        document.getElementById('nontechnical-checkbox').addEventListener('change', updateDashboard);
-
-
-        const older24 = document.getElementById('older-checkbox');
-        const older48 = document.getElementById('older48-checkbox');
-
-        older24.addEventListener('change', () => {
-            if (older24.checked) older48.checked = false;
-            updateDashboard();
-        });
-
-        older48.addEventListener('change', () => {
-            if (older48.checked) older24.checked = false;
-            updateDashboard();
-        });
-
-
-        /**
-         * Calculates the count of dockets per region from the given data.
-         * This now counts ALL dockets (technical and non-technical) that pass prior filters.
-         * @param {Array} data - The already filtered data.
-         * @returns {Object} An object where keys are region names and values are their docket counts.
-         */
-        function getRegionDocketCounts(data) {
-            const regionCounts = {};
-            data.forEach(item => {
-                const region = item.resolvedRegion;
-                if (region) {
-                    regionCounts[region] = (regionCounts[region] || 0) + 1;
-                }
-            });
-            return regionCounts;
-        }
-
-        /**
-         * Renders the region summary cards based on the calculated docket counts.
-         * Displays the last level drilled down (Region, Division, or CCC) as the card name.
-         * @param {Object} counts - An object with region docket counts.
-         */
-        function renderRegionSummaryCards(counts) {
-            regionSummaryCardsContainer.innerHTML = ''; // Clear existing cards
-
-            // Determine the display level based on selected filters
-            let displayLevel = 'region';
-            if (selectedCCC && selectedCCC !== "All") {
-                displayLevel = 'ccc';
-            } else if (selectedDivision && selectedDivision !== "All") {
-                displayLevel = 'division';
-            }
-
-            const regionNames = Object.keys(counts).sort();
-
-            if (regionNames.length === 0) {
-                noRegionDataMessage.classList.remove('hidden');
-                noRegionDataMessage.style.display = 'block';
-                noRegionDataMessage.textContent = 'No docket data for selected filters across regions.';
-                regionSummaryCardsContainer.style.display = 'none';
+            cccSelect.innerHTML = '<option value="All">All Units</option>';
+            if (selectedDivision === "All") {
+                cccSelect.disabled = true;
             } else {
-                noRegionDataMessage.classList.add('hidden');
-                noRegionDataMessage.style.display = 'none';
-                regionSummaryCardsContainer.style.display = 'flex';
-
-                // Use the already filtered data from the updateDashboard scope
-                let currentFilteredData = getFilteredData();
-                currentFilteredData = filterByDescriptionType(currentFilteredData);
-                currentFilteredData = filterByAge(currentFilteredData);
-
-                let cardNameForDisplay = "";
-                let totalCountForCard = 0;
-                let uniqueConIdCountForCard = 0;
-
-                if (displayLevel === 'ccc') {
-                    cardNameForDisplay = selectedCCC.replace(' CCC', '');
-                    const targetCccCode = getCCCCodeFromName(selectedCCC, selectedRegion, selectedDivision);
-                    // Filter specifically for this CCC
-                    const dataForCard = currentFilteredData.filter(d => d.ccc_code === targetCccCode);
-                    totalCountForCard = dataForCard.length;
-                    const uniqueConIds = new Set(dataForCard.map(d => d.con_id).filter(Boolean));
-                    uniqueConIdCountForCard = uniqueConIds.size;
-                } else if (displayLevel === 'division') {
-                    cardNameForDisplay = toProperCase(selectedDivision.replace(' DIVISION', ''));
-                    // Filter specifically for this division using resolved property
-                    const dataForCard = currentFilteredData.filter(d => d.resolvedDivision === selectedDivision);
-                    totalCountForCard = dataForCard.length;
-                    const uniqueConIds = new Set(dataForCard.map(d => d.con_id).filter(Boolean));
-                    uniqueConIdCountForCard = uniqueConIds.size;
-                } else if (displayLevel === 'region' && selectedRegion && selectedRegion !== "All") {
-                    cardNameForDisplay = toProperCase(selectedRegion.replace(' REGION', ''));
-                    // Filter specifically for this region using resolved property
-                    const dataForCard = currentFilteredData.filter(d => d.resolvedRegion === selectedRegion);
-                    totalCountForCard = dataForCard.length;
-                    const uniqueConIds = new Set(dataForCard.map(d => d.con_id).filter(Boolean));
-                    uniqueConIdCountForCard = uniqueConIds.size;
-                } else { // 'region' and selectedRegion is "All" (or null) - show individual region cards
-                    regionNames.forEach(regionName => {
-                        const count = counts[regionName];
-                        // Filter the *already filtered* data further for this specific region using resolved property
-                        const dataForRegion = currentFilteredData.filter(d => d.resolvedRegion === regionName);
-                        const uniqueConIdsRegion = new Set(dataForRegion.map(d => d.con_id).filter(Boolean));
-                        const uniqueCountRegion = uniqueConIdsRegion.size;
-
-                        const card = document.createElement('div');
-                        card.className = 'region-summary-card';
-                        card.innerHTML = `
-                            <div class="region-summary-card-name">${toProperCase(regionName.replace(' REGION', ''))}</div>
-                            <div class="region-summary-card-count">${count}</div>
-                            <div class="region-summary-card-unique-count">(${uniqueCountRegion} unique)</div>
-                        `;
-                        regionSummaryCardsContainer.appendChild(card);
-                    });
-                    return;
-                }
-
-                // Render single aggregated card
-                const card = document.createElement('div');
-                card.className = 'region-summary-card';
-                card.innerHTML = `
-                    <div class="region-summary-card-name">${cardNameForDisplay}</div>
-                    <div class="region-summary-card-count">${totalCountForCard}</div>
-                    <div class="region-summary-card-unique-count">(${uniqueConIdCountForCard} unique)</div>
-                `;
-                regionSummaryCardsContainer.appendChild(card);
+                cccSelect.disabled = false;
+                // Correctly resolve the division record to get its code
+                const rec = window.MZO_HIERARCHY.getData().find(d => d.division_name === selectedDivision);
+                const cccs = window.MZO_HIERARCHY.getCCCsByDivision(rec?.division_code);
+                cccs.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.code;
+                    opt.textContent = c.name;
+                    cccSelect.appendChild(opt);
+                });
             }
         }
 
+        // Event Listeners
+        regionSelect.onchange = (e) => {
+            selectedRegion = e.target.value;
+            selectedDivision = "All";
+            selectedCCC = "All";
+            updateDivisionDropdown();
+            updateCCCDropdown();
+            updateDashboard();
+        };
 
-        /**
-         * Main function to update all dashboard components.
-         */
-        async function updateDashboard() {
-            // The state variables (selectedRegion, selectedDivision, selectedCCC)
-            // are now managed by their respective event handlers. This function just
-            // uses the current state to re-render the UI.
+        divisionSelect.onchange = (e) => {
+            selectedDivision = e.target.value;
+            selectedCCC = "All";
+            updateCCCDropdown();
+            updateDashboard();
+        };
 
-            // Render the filter UI components
-            renderCombinedFilterCards();
-            renderCccFilter();
+        cccSelect.onchange = (e) => {
+            selectedCCC = e.target.value;
+            updateDashboard();
+        };
 
+        ageFilter.onchange = updateDashboard;
+        tableSearch.oninput = updateDashboard;
+        document.getElementById('technical-checkbox').onchange = updateDashboard;
+        document.getElementById('nontechnical-checkbox').onchange = updateDashboard;
 
-            // Filter data based on region/division/CCC
-            let filteredData = getFilteredData();
-            // Apply description type (Tech/Non-Tech) and age (24H+/48H+) filters
-            filteredData = filterByDescriptionType(filteredData);
-            filteredData = filterByAge(filteredData);
-
-            // Calculate and render region-wise docket summary (all types)
-            const regionCounts = getRegionDocketCounts(filteredData);
-            renderRegionSummaryCards(regionCounts);
-
-            // Calculate and render problem type cards (still separated by tech/non-tech for individual cards)
-            const probTypeCounts = getProbTypeCounts(filteredData);
-            renderProbTypeCards(probTypeCounts);
-
-            // Update latest docket date
-            const latestDate = getLatestDocketDate(filteredData);
-            updateLatestDateDisplay(latestDate);
+        function downloadListModalCsv() {
+            if (!currentCCCdocketsForDownload.length) return;
+            downloadCsv(currentCCCdocketsForDownload, `Problem_Analysis_Report.csv`);
         }
 
-        // Event Listeners for filter cards and dropdown
-        combinedFilterCards.addEventListener('click', (e) => {
-            const card = e.target.closest('.filter-card');
-            if (!card) return;
+        function downloadDetailModalCsv() {
+            if (!currentDetailDocketsForDownload.length) return;
+            downloadCsv(currentDetailDocketsForDownload, `Docket_${currentDetailDocketsForDownload[0].doc_no}_Detail.csv`);
+        }
 
-            const value = card.dataset.value;
-            const type = card.dataset.type;
-            const isActive = card.classList.contains('active');
+        function downloadCsv(data, filename) {
+            const csv = Papa.unparse(data);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', filename);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
 
-            if (isActive) {
-                // Clicked an active card, so deactivate it and clear all hierarchical filters
-                selectedRegion = null;
-                selectedDivision = null;
-                selectedCCC = null;
-            } else {
-                // Clicked an inactive card, so activate it and clear lower-level filters
-                if (type === 'region') {
-                    selectedRegion = value;
-                    selectedDivision = null;
-                } else if (type === 'division') {
-                    selectedDivision = value;
-                    selectedRegion = getRegionForDivision(value); // Set parent region
-                }
-                selectedCCC = null; // Always reset CCC when region/division changes
-            }
-            updateDashboard();
-        });
-
-        cccSelect.addEventListener('change', () => {
-            selectedCCC = cccSelect.value === "All" ? null : cccSelect.value;
-            updateDashboard();
-        });
-
-        // Initial load of the dashboard: fetch data then update
+        // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
-            // Attempt to fetch live data (CSV) and Hierarchy Mapping (from Google Sheet) in parallel
+            b5DocketListModal = new bootstrap.Modal(document.getElementById('docketListModal'));
+            b5DocketDetailModal = new bootstrap.Modal(document.getElementById('docketDetailModal'));
+
             try {
-                const dataPromise = fetchCsvData(CSV_URL);
+                await window.MZO_HIERARCHY.load();
+                handleRBACPermissions();
+                populateInitialDropdowns();
 
-                // If MZO_HIERARCHY is available and not loaded, load it
-                let hierarchyPromise = Promise.resolve();
-                if (window.MZO_HIERARCHY && !window.MZO_HIERARCHY.isLoaded()) {
-                    hierarchyPromise = window.MZO_HIERARCHY.load();
-                }
-
-                // Wait for both
-                const [data] = await Promise.all([dataPromise, hierarchyPromise]);
-
-                // --- Hierarchy Resolution: Enrich dockets with standardized names ---
+                const data = await fetchCsvData(CSV_URL);
                 docketCallData = data.map(d => {
                     const h = window.MZO_HIERARCHY.getFullHierarchy(d.ccc_code);
                     return {
                         ...d,
-                        resolvedRegion: h ? normalizeHierarchyName(h.region.name, 'region') : null,
-                        resolvedDivision: h ? normalizeHierarchyName(h.division.name, 'division') : null
+                        resolvedRegion: h?.region?.name,
+                        resolvedDivision: h?.division?.name
                     };
                 });
 
-                if (docketCallData.length === 0) {
-                    errorMessage.textContent = "Failed to load data from CSV. Please ensure the Google Sheet is published to web as CSV and the URL is correct.";
-                    errorMessage.style.display = 'block';
-                } else {
-                    errorMessage.style.display = 'none';
-                    combinedFilterCardsContainer.style.display = 'block';
-                    probTypeCardsContainer.style.display = 'grid';
-                    regionSummaryCardsContainer.style.display = 'flex';
-
-                    // --- RBAC: Now that hierarchy is loaded, resolve user permissions ---
-                    handleRBACPermissions();
-
-                    updateDashboard(); // Initial render of filters and data
-                }
-            } catch (error) {
-                console.error("Initialization error:", error);
-                errorMessage.textContent = "An error occurred during dashboard initialization. Please try again.";
+                updateDashboard();
+            } catch (err) {
+                console.error(err);
+                errorMessage.textContent = "Critical Error: " + err.message;
                 errorMessage.style.display = 'block';
             }
         });
-        /**
-         * Displays detailed information about a docket, or multiple dockets if a duplicate Con ID is clicked.
- 
-         * @param {Object} data - The docket object that was clicked.
-         * @param {Array} allDocketsInCurrentTab - All docket objects currently displayed in the active CCC tab.
-         */
-        function showDocketDetail(data, allDocketsInCurrentTab) {
-            const content = document.getElementById('docket-detail-content');
-            const cccName = getCCCNameByCode(data.ccc_code?.trim()) || '-';
-
-            let htmlContent = '';
-
-            // Check if this docket's Con ID is duplicated within the current tab's dockets
-            const relatedDockets = allDocketsInCurrentTab.filter(d => d.con_id === data.con_id && d.con_id);
-
-            if (relatedDockets.length > 1) {
-                // It's a duplicate Con ID, show aggregated info
-                const docketNumbers = relatedDockets.map(d => d.doc_no).join(', ');
-                const createdTimes = relatedDockets.map(d => d.doc_crn_dt).join(', ');
-                const firstDocketSince = getTimeDifference(relatedDockets[0].doc_crn_dt); // Show "Since" for the first docket
-
-                htmlContent = `
-      <table class="modal-table" style="width:100%;">
-        <tr><td><strong>CCC Name:</strong></td><td>${cccName}</td></tr>
-        <tr><td><strong>Con ID:</strong></td><td>${data.con_id}</td></tr>
-        <tr><td><strong>Party:</strong></td><td>${data.PARTY_NAME}</td></tr>
-        <tr><td><strong>Mobile:</strong></td><td>${data.Mob_No}</td></tr>
-        <tr><td><strong>Address:</strong></td><td>${data.addr}</td></tr>
-        <tr><td><strong>Problem Type:</strong></td><td>${data.prob_type}</td></tr>
-        <tr><td><strong>All Docket Nos:</strong></td><td>${docketNumbers}</td></tr>
-        <tr><td><strong>Created Times:</strong></td><td>${createdTimes}</td></tr>
-        <tr><td><strong>Since (First Docket):</strong></td><td>${firstDocketSince}</td></tr>
-      </table>
-    `;
-                currentDetailDocketsForDownload = relatedDockets; // Set data for download
-            } else {
-                // Not a duplicate Con ID, or no Con ID, show individual docket details
-                const since = getTimeDifference(data.doc_crn_dt);
-                htmlContent = `
-      <table class="modal-table" style="width:100%;">
-        <tr><td><strong>CCC Name:</strong></td><td>${cccName}</td></tr>
-        <tr><td><strong>Doc No:</strong></td><td>${data.doc_no}</td></tr>
-        <tr><td><strong>Con ID:</strong></td><td>${data.con_id || '-'}</td></tr>
-        <tr><td><strong>Party:</strong></td><td>${data.PARTY_NAME}</td></tr>
-        <tr><td><strong>Mobile:</strong></td><td>${data.Mob_No}</td></tr>
-        <tr><td><strong>Address:</strong></td><td>${data.addr}</td></tr>
-        <tr><td><strong>Problem Type:</strong></td><td>${data.prob_type}</td></tr>
-        <tr><td><strong>Created:</strong></td><td>${data.doc_crn_dt}</td></tr>
-        <tr><td><strong>Since:</strong></td><td>${since}</td></tr>
-      </table>
-    `;
-                currentDetailDocketsForDownload = [data]; // Set data for download
-            }
-
-            content.innerHTML = htmlContent;
-            document.getElementById('docket-detail-modal').style.display = 'flex';
-        }
-
-        function closeDocketDetailModal() {
-            document.getElementById('docket-detail-modal').style.display = "none";
-            currentDetailDocketsForDownload = []; // Clear data when modal closes
-        }
-
-        /**
-         * Generic function to download data as a CSV file.
-         * @param {Array<Object>} data - An array of objects to convert to CSV.
-         * @param {string} filename - The desired filename for the CSV.
-         */
-        function downloadCsv(data, filename) {
-            if (!data || data.length === 0) {
-                console.warn("No data to download.");
-                return;
-            }
-
-            const headers = Object.keys(data[0]); // Get all headers from the first object
-            const csvRows = [];
-
-            // Add header row
-            csvRows.push(headers.map(header => `"${header.replace(/"/g, '""')}"`).join(','));
-
-            // Add data rows
-            for (const row of data) {
-                const values = headers.map(header => {
-                    let value = row[header];
-                    if (value === null || value === undefined) {
-                        value = '';
-                    } else if (typeof value === 'object') {
-                        value = JSON.stringify(value); // Stringify objects/arrays
-                    } else {
-                        value = String(value);
-                    }
-                    // Escape double quotes and enclose in quotes if value contains comma or double quote
-                    if (value.includes(',') || value.includes('"')) {
-                        return `"${value.replace(/"/g, '""')}"`;
-                    }
-                    return value;
-                });
-                csvRows.push(values.join(','));
-            }
-
-            const csvString = csvRows.join('\n');
-            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute('download', filename);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        /**
-         * Downloads the CSV for the currently active CCC tab in the docket list modal.
-         */
-        function downloadListModalCsv() {
-            if (currentCCCdocketsForDownload && currentCCCdocketsForDownload.length > 0) {
-                const problemType = document.getElementById('modal-title').textContent.split('—')[1]?.trim() || 'Dockets';
-                const activeTabButton = document.querySelector('#docket-list-modal .ccc-tab-button.active');
-                const cccName = activeTabButton ? activeTabButton.dataset.ccc.replace(' CCC', '') : 'All';
-                const filename = `${problemType.replace(/[^a-zA-Z0-9]/g, '_')}_${cccName}_Dockets.csv`;
-                downloadCsv(currentCCCdocketsForDownload, filename);
-            } else {
-                console.warn("No data available to download in the current CCC tab.");
-            }
-        }
-
-        /**
-         * Downloads the CSV for the currently displayed docket(s) in the detail modal.
-         */
-        function downloadDetailModalCsv() {
-            if (currentDetailDocketsForDownload && currentDetailDocketsForDownload.length > 0) {
-                const docketNo = currentDetailDocketsForDownload[0].doc_no;
-                const filename = `Docket_Detail_${docketNo}.csv`;
-                downloadCsv(currentDetailDocketsForDownload, filename);
-            } else {
-                console.warn("No data available to download in the detail modal.");
-            }
-        }
-
-
-        document.getElementById('older-checkbox').addEventListener('change', () => {
-            const modal = document.getElementById("docket-list-modal"); // Renamed ID
-            const isModalVisible = modal.style.display === "flex";
-
-            if (isModalVisible && window.lastModalProblemType) {
-                // Re-filter data for the modal based on current dashboard filters
-                let currentFilteredData = getFilteredData(); // Apply region, division, CCC
-                currentFilteredData = filterByDescriptionType(currentFilteredData); // Apply Tech/Non-Tech
-                currentFilteredData = filterByAge(currentFilteredData);
-
-                const docketsForProblemType = currentFilteredData.filter(d =>
-                    d.prob_type === window.lastModalProblemType
-                );
-                showProblemTypeDetailsModal(window.lastModalProblemType, docketsForProblemType); // Call renamed function
-            }
-        });
-        document.getElementById('older48-checkbox').addEventListener('change', () => {
-            const modal = document.getElementById("docket-list-modal"); // Renamed ID
-            const isModalVisible = modal.style.display === "flex";
-
-            if (isModalVisible && window.lastModalProblemType) {
-                let currentFilteredData = getFilteredData();
-                currentFilteredData = filterByDescriptionType(currentFilteredData);
-                currentFilteredData = filterByAge(currentFilteredData);
-
-                const docketsForProblemType = currentFilteredData.filter(d =>
-                    d.prob_type === window.lastModalProblemType
-                );
-                showProblemTypeDetailsModal(window.lastModalProblemType, docketsForProblemType); // Call renamed function
-            }
-        });
-
-
-        function filterByAge(data) {
-            const older24Checked = document.getElementById('older-checkbox').checked;
-            const older48Checked = document.getElementById('older48-checkbox').checked;
-
-            return data.filter(d => {
-                const parsedDate = parseDateString(d.doc_crn_dt);
-                if (isNaN(parsedDate)) return false; // ignore invalid dates
-
-                const now = new Date();
-                const diffMs = now - parsedDate;
-                const diffHours = diffMs / (1000 * 60 * 60);
-
-                if (older48Checked) return diffHours >= 48;
-                if (older24Checked) return diffHours >= 24;
-
-                return true; // no filter
-            });
-        }
     </script>
-    <!-- Docket List Modal (Now handles CCC tabs) -->
-    <div id="docket-list-modal" class="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">
-                <span id="modal-title">Docket Details</span>
-                <i class="fas fa-download download-icon" onclick="downloadListModalCsv()" title="Download CSV"></i>
-                <button onclick="closeProblemTypeDetailsModal()" class="modal-close-button">✕</button>
-            </div>
-            <div id="modal-content" class="modal-content-scrollable"></div>
-        </div>
-    </div>
-
-    <!-- Docket Detail Modal -->
-    <div id="docket-detail-modal" class="modal-overlay" style="z-index:1100;">
-        <div class="modal-container">
-            <div class="modal-header">
-                <strong>Docket Detail</strong>
-                <i class="fas fa-download download-icon" onclick="downloadDetailModalCsv()" title="Download CSV"></i>
-                <button onclick="closeDocketDetailModal()" class="modal-close-button">✕</button>
-            </div>
-            <div id="docket-detail-content" class="modal-content-scrollable"></div>
-        </div>
-    </div>
-
 </body>
 
 </html>

@@ -1124,13 +1124,15 @@
       transform: translateY(-2px);
     }
 
-    .header-icon#logoutBtn {
+    .header-icon#logoutBtn,
+    .header-icon#mainLogoutBtn {
       color: var(--danger);
       background: rgba(244, 63, 94, 0.1);
       border-color: rgba(244, 63, 94, 0.2);
     }
 
-    .header-icon#logoutBtn:hover {
+    .header-icon#logoutBtn:hover,
+    .header-icon#mainLogoutBtn:hover {
       background: var(--danger);
       color: white;
       border-color: var(--danger);
@@ -1824,12 +1826,15 @@
                     <div class="subtitle">Actionable Insights</div>
                   </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 8px;"><button class="theme-toggle"
-                    id="themeToggleBtn" title="Toggle theme">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <button class="theme-toggle" id="themeToggleBtn" title="Toggle theme">
                     <i class="fas fa-sun"></i>
                   </button>
-                  <button class="refresh-icon" id="mainRefreshBtn">
+                  <button class="refresh-icon" id="mainRefreshBtn" title="Refresh Page">
                     <i class="fas fa-sync-alt"></i>
+                  </button>
+                  <button class="header-icon" id="mainLogoutBtn" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
                   </button>
                 </div>
               </div>
@@ -2366,6 +2371,25 @@
     // Apply saved theme on initial load
     const savedTheme = localStorage.getItem('theme') || 'dark'; // Default to dark
     applyTheme(savedTheme);
+
+    // Logout handling
+    const mainLogoutBtn = document.getElementById('mainLogoutBtn');
+    if (mainLogoutBtn) {
+      mainLogoutBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to logout?')) {
+          MZO_AUTH.logout();
+        }
+      });
+    }
+
+    const detailLogoutBtn = document.getElementById('logoutBtn');
+    if (detailLogoutBtn) {
+      detailLogoutBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to logout?')) {
+          MZO_AUTH.logout();
+        }
+      });
+    }
   </script>
   <script>
 

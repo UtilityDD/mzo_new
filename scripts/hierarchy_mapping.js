@@ -41,7 +41,7 @@ async function loadHierarchyMapping() {
                         unique.set(item.ccc_code, item);
                     }
                 });
-                
+
                 hierarchyData = Array.from(unique.values());
                 hierarchyLoaded = true;
                 console.log(`✓ Loaded ${hierarchyData.length} unique hierarchy records`);
@@ -100,6 +100,22 @@ function getZoneName(zoneCode) {
 }
 
 /**
+ * Find a record by any organizational code (Zone, Region, Division, or CCC)
+ * @param {string|number} code - The code to search for
+ * @returns {Object|null} The first matching record found or null
+ */
+function getRecordByCode(code) {
+    if (!code) return null;
+    const codeStr = String(code);
+    return hierarchyData.find(item =>
+        item.ccc_code === codeStr ||
+        item.division_code === codeStr ||
+        item.region_code === codeStr ||
+        item.zone_code === codeStr
+    ) || null;
+}
+
+/**
  * Get full hierarchy information for a CCC
  * @param {string|number} cccCode - The CCC code
  * @returns {Object|null} Hierarchy object or null if not found
@@ -108,7 +124,7 @@ function getFullHierarchy(cccCode) {
     if (!cccCode) return null;
     const record = hierarchyData.find(item => item.ccc_code === String(cccCode));
     if (!record) return null;
-    
+
     return {
         ccc: { code: record.ccc_code, name: record.ccc_name },
         division: { code: record.division_code, name: record.division_name },
@@ -124,7 +140,7 @@ function getFullHierarchy(cccCode) {
  */
 function getCCCsByDivision(divisionCode) {
     if (!divisionCode) return [];
-    
+
     return hierarchyData
         .filter(item => item.division_code === String(divisionCode))
         .map(item => ({
@@ -141,7 +157,7 @@ function getCCCsByDivision(divisionCode) {
  */
 function getDivisionsByRegion(regionCode) {
     if (!regionCode) return [];
-    
+
     const divisions = new Map();
     hierarchyData
         .filter(item => item.region_code === String(regionCode))
@@ -150,7 +166,7 @@ function getDivisionsByRegion(regionCode) {
                 divisions.set(item.division_code, item.division_name);
             }
         });
-    
+
     return Array.from(divisions, ([code, name]) => ({ code, name }))
         .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -166,7 +182,7 @@ function getAllRegions() {
             regions.set(item.region_code, item.region_name);
         }
     });
-    
+
     return Array.from(regions, ([code, name]) => ({ code, name }))
         .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -177,12 +193,12 @@ function getAllRegions() {
  */
 function getHierarchyTree() {
     const tree = {};
-    
+
     hierarchyData.forEach(item => {
         const zone = item.zone_code;
         const region = item.region_code;
         const division = item.division_code;
-        
+
         // Initialize zone
         if (!tree[zone]) {
             tree[zone] = {
@@ -191,7 +207,7 @@ function getHierarchyTree() {
                 regions: {}
             };
         }
-        
+
         // Initialize region
         if (!tree[zone].regions[region]) {
             tree[zone].regions[region] = {
@@ -200,7 +216,7 @@ function getHierarchyTree() {
                 divisions: {}
             };
         }
-        
+
         // Initialize division
         if (!tree[zone].regions[region].divisions[division]) {
             tree[zone].regions[region].divisions[division] = {
@@ -209,7 +225,7 @@ function getHierarchyTree() {
                 cccs: []
             };
         }
-        
+
         // Add CCC
         const cccs = tree[zone].regions[region].divisions[division].cccs;
         if (!cccs.find(c => c.code === item.ccc_code)) {
@@ -219,7 +235,7 @@ function getHierarchyTree() {
             });
         }
     });
-    
+
     return tree;
 }
 
@@ -232,7 +248,7 @@ function getHierarchyTree() {
 function generateBreadcrumb(cccCode, separator = ' → ') {
     const hierarchy = getFullHierarchy(cccCode);
     if (!hierarchy) return '';
-    
+
     return [
         hierarchy.zone.name,
         hierarchy.region.name,
@@ -248,10 +264,10 @@ function generateBreadcrumb(cccCode, separator = ' → ') {
  */
 function searchCCCs(searchTerm) {
     if (!searchTerm) return [];
-    
+
     const term = searchTerm.toLowerCase();
     return hierarchyData
-        .filter(item => 
+        .filter(item =>
             item.ccc_name.toLowerCase().includes(term) ||
             item.ccc_code.includes(searchTerm)
         )
@@ -273,6 +289,7 @@ if (typeof window !== 'undefined') {
         getDivisionName,
         getRegionName,
         getZoneName,
+        getRecordByCode,
         getFullHierarchy,
         getCCCsByDivision,
         getDivisionsByRegion,
@@ -281,7 +298,7 @@ if (typeof window !== 'undefined') {
         generateBreadcrumb,
         searchCCCs
     };
-    
+
     // Auto-load on DOM ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', loadHierarchyMapping);

@@ -806,8 +806,18 @@
         </div>
     </div>
 
+    <!-- Script Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="scripts/auth_system.js"></script>
+    <script src="scripts/hierarchy_mapping.js"></script>
+
     <script>
+        // Session Check - Ensure user is authenticated
+        MZO_AUTH.checkSession();
+        const currentUser = MZO_AUTH.getUser();
+
         // Data source URL - IMPORTANT: This URL must be publicly accessible.
+
         // If you encounter "Failed to load data" error, ensure the Google Sheet is published to web as CSV.
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTT56PULgjKw_-wu8lmMWNE6SC1KBDyAKxeHaMloZJWUQ9HQsJoqosYF33DrQK3NX9Bvfn0mjfx-dkP/pub?gid=1059428699&single=true&output=csv';
 
@@ -976,16 +986,199 @@
         const noRegionDataMessage = document.getElementById('no-region-data-message');
 
 
-        // Current selections
+        // Helper to normalize names for regionData keys
+        function normalizeHierarchyName(name, type) {
+            if (!name) return null;
+            const upperName = name.toUpperCase().trim();
+            if (type === 'region') {
+                return upperName.endsWith(' REGION') ? upperName : upperName + ' REGION';
+            }
+            if (type === 'division') {
+                return upperName.endsWith(' DIVISION') ? upperName : upperName + ' DIVISION';
+            }
+            return upperName;
+        }
+
+        // Current selections (moved up for global access)
         let selectedRegion = null;
         let selectedDivision = null;
         let selectedCCC = null;
+
+        // RBAC: Authorized units for the current user
+        let userAuthorizedRegion = null;
+        let userAuthorizedDivision = null;
+        let userAuthorizedCCC = null;
+
+        /**
+         * Initializes filter state based on user permissions
+         */
+        function handleRBACPermissions() {
+            if (!currentUser || !currentUser.role) return;
+
+            const isAdmin = currentUser.role.toLowerCase() === 'admin';
+            console.log("Setting up RBAC permissions for user:", currentUser.Username, "isAdmin:", isAdmin);
+
+            if (isAdmin) return;
+
+            // Resolve authorized names via MZO_HIERARCHY
+            if (currentUser.division) {
+                userAuthorizedDivision = getDivisionNameByCode(currentUser.division);
+                if (userAuthorizedDivision) {
+                    userAuthorizedRegion = getRegionForDivision(userAuthorizedDivision);
+
+                    // Auto-select for UI filters
+                    selectedDivision = userAuthorizedDivision;
+                    selectedRegion = userAuthorizedRegion;
+                }
+            } else if (currentUser.region) {
+                userAuthorizedRegion = getRegionNameByCode(currentUser.region);
+                if (userAuthorizedRegion) {
+                    // Auto-select for UI filters
+                    selectedRegion = userAuthorizedRegion;
+                }
+            }
+
+            if (currentUser.ccc) {
+                userAuthorizedCCC = getCCCNameByCode(currentUser.ccc);
+                if (userAuthorizedCCC) {
+                    // Auto-select for UI filters
+                    selectedCCC = userAuthorizedCCC;
+
+                    // Resolve parents if not already set (e.g. for a pure CCC user)
+                    if (!userAuthorizedDivision || !userAuthorizedRegion) {
+                        const h = window.MZO_HIERARCHY.getFullHierarchy(currentUser.ccc);
+                        if (h) {
+                            if (!userAuthorizedDivision) userAuthorizedDivision = normalizeHierarchyName(h.division.name, 'division');
+                            if (!userAuthorizedRegion) userAuthorizedRegion = normalizeHierarchyName(h.region.name, 'region');
+
+                            selectedDivision = userAuthorizedDivision || selectedDivision;
+                            selectedRegion = userAuthorizedRegion || selectedRegion;
+                        }
+                    }
+                }
+            }
+
+            console.log("RBAC Authorized Scope:", { userAuthorizedRegion, userAuthorizedDivision, userAuthorizedCCC });
+            console.log("RBAC Initial UI State:", { selectedRegion, selectedDivision, selectedCCC });
+        }
+
+        /**
+         * Gets standardized region name from any code.
+         */
+        function getRegionNameByCode(code) {
+            if (!code) return null;
+            if (window.MZO_HIERARCHY && window.MZO_HIERARCHY.isLoaded()) {
+                const record = window.MZO_HIERARCHY.getRecordByCode(code);
+                if (record && record.region_name) {
+                    return normalizeHierarchyName(record.region_name, 'region');
+                }
+            }
+            // Fallback to regionData matching
+            for (const r in regionData) {
+                if (regionData[r].code === String(code)) return r;
+            }
+            return null;
+        }
+
+        /**
+         * Gets standardized division name from any code.
+         */
+        function getDivisionNameByCode(code) {
+            if (!code) return null;
+            if (window.MZO_HIERARCHY && window.MZO_HIERARCHY.isLoaded()) {
+                const record = window.MZO_HIERARCHY.getRecordByCode(code);
+                if (record && record.division_name) {
+                    return normalizeHierarchyName(record.division_name, 'division');
+                }
+            }
+            // Fallback to regionData matching
+            for (const r in regionData) {
+                for (const d in regionData[r].divisions) {
+                    if (regionData[r].divisions[d].code === String(code)) return d;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Gets standardized CCC name from any code.
+         */
+        function getCCCNameByCode(code) {
+            if (!code) return null;
+            if (window.MZO_HIERARCHY && window.MZO_HIERARCHY.isLoaded()) {
+                const record = window.MZO_HIERARCHY.getRecordByCode(code);
+                if (record && record.ccc_name) {
+                    let name = record.ccc_name.toUpperCase().trim();
+                    if (!name.endsWith(' CCC')) name += ' CCC';
+                    return name;
+                }
+            }
+            // Fallback to regionData
+            for (const r in regionData) {
+                for (const d in regionData[r].divisions) {
+                    for (const ccc in regionData[r].divisions[d].cccs) {
+                        if (regionData[r].divisions[d].cccs[ccc] === String(code)) return ccc;
+                    }
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Gets the region name from a CCC code using the regionData mapping.
+         */
+        function getRegionByCCC(cccCode) {
+            const name = getRegionNameByCode(cccCode);
+            if (name) return name;
+
+            // Fallback
+            for (const regionName in regionData) {
+                const region = regionData[regionName];
+                for (const divisionName in region.divisions) {
+                    const division = region.divisions[divisionName];
+                    for (const cccName in division.cccs) {
+                        if (division.cccs[cccName] === cccCode) return regionName;
+                    }
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Gets the parent region name for a given division name.
+         */
+        function getRegionForDivision(divisionName) {
+            for (const regionName in regionData) {
+                if (regionData[regionName].divisions[divisionName]) return regionName;
+            }
+            return null;
+        }
+
+        /**
+         * Gets the division name from a CCC code using the regionData mapping.
+         */
+        function getDivisionByCCC(cccCode) {
+            const name = getDivisionNameByCode(cccCode);
+            if (name) return name;
+
+            for (const regionName in regionData) {
+                for (const divisionName in regionData[regionName].divisions) {
+                    const division = regionData[regionName].divisions[divisionName];
+                    for (const cccName in division.cccs) {
+                        if (division.cccs[cccName] === cccCode) return divisionName;
+                    }
+                }
+            }
+            return null;
+        }
+
 
         /**
          * Converts a string to Proper Case.
          * @param {string} str - The string to convert.
          * @returns {string} The converted string.
          */
+
         function toProperCase(str) {
             if (!str) return '';
             return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
@@ -1108,62 +1301,70 @@
         }
 
         /**
-         * Filters the docket data based on selected region, division, and CCC.
+         * Filters the docket data based on selected region, division, and CCC, 
+         * while strictly enforcing RBAC authorized scope.
          * @returns {Array} The filtered data.
          */
         function getFilteredData() {
-            let filtered = docketCallData; // Start with all data
+            let filtered = docketCallData;
             console.log("--- Filtering Process Started ---");
-            console.log("Initial data length:", filtered.length);
 
-            // Filter by Region
-            if (selectedRegion && selectedRegion !== "All") {
-                const regionCodePrefix = regionData[selectedRegion].code.substring(0, 3);
-                filtered = filtered.filter(d => {
-                    // Check if Divn_code exists and starts with the region code prefix
-                    const matches = d.Divn_code && d.Divn_code.startsWith(regionCodePrefix);
-                    console.log(`Region filter: d.Divn_code='${d.Divn_code}', prefix='${regionCodePrefix}', matches=${matches}`);
-                    return matches;
-                });
-                console.log(`Filtered by Region (${selectedRegion}, prefix ${regionCodePrefix}): ${filtered.length} records`);
+            // --- Baseline RBAC Guard: Strictly filter by authorized scope first ---
+            if (userAuthorizedRegion) {
+                filtered = filtered.filter(d => d.resolvedRegion === userAuthorizedRegion);
             }
-
-            // Filter by Division (dependent on Region selection)
-            if (selectedDivision && selectedDivision !== "All") {
-                const divisionCodeFull = regionData[selectedRegion]?.divisions[selectedDivision]?.code;
-                if (divisionCodeFull) {
-                    // Use the first 4 characters of the full division code for comparison with CSV's Divn_code
-                    const divisionCodeCsvFormat = divisionCodeFull.substring(0, 4);
-                    filtered = filtered.filter(d => {
-                        // Check if Divn_code exists and matches the 4-digit division code
-                        const matches = d.Divn_code === divisionCodeCsvFormat;
-                        console.log(`Division filter: d.Divn_code='${d.Divn_code}', targetCode='${divisionCodeCsvFormat}' (from ${divisionCodeFull}), matches=${matches}`);
-                        return matches;
-                    });
-                    console.log(`Filtered by Division (${selectedDivision}, code ${divisionCodeFull}): ${filtered.length} records`);
-                } else {
-                    filtered = []; // If selectedDivision doesn't map to a code, no data matches
-                    console.log(`Division code not found for ${selectedDivision}. Filtered length: ${filtered.length}`);
+            if (userAuthorizedDivision) {
+                filtered = filtered.filter(d => d.resolvedDivision === userAuthorizedDivision);
+            }
+            if (userAuthorizedCCC) {
+                const targetCccCode = getCCCCodeFromName(userAuthorizedCCC);
+                if (targetCccCode) {
+                    filtered = filtered.filter(d => d.ccc_code === targetCccCode);
                 }
             }
+            console.log("After baseline RBAC filtering:", filtered.length);
 
-            // Filter by CCC (dependent on Division selection)
+            // --- User UI Selections: Further filter based on active UI selections ---
+            // If user has access to multiple regions (Admin or no restriction), filter by selection
+            if (!userAuthorizedRegion && selectedRegion && selectedRegion !== "All") {
+                filtered = filtered.filter(d => d.resolvedRegion === selectedRegion);
+            }
+
+            // If user has access to multiple divisions (Admin or Region scope), filter by selection
+            if (!userAuthorizedDivision && selectedDivision && selectedDivision !== "All") {
+                filtered = filtered.filter(d => d.resolvedDivision === selectedDivision);
+            }
+
+            // Filter by CCC UI selection
             if (selectedCCC && selectedCCC !== "All") {
-                const cccCode = regionData[selectedRegion]?.divisions[selectedDivision]?.cccs[selectedCCC];
-                if (cccCode) {
-                    filtered = filtered.filter(d => {
-                        const matches = d.ccc_code === cccCode;
-                        console.log(`CCC filter: d.ccc_code='${d.ccc_code}', targetCode='${cccCode}', matches=${matches}`);
-                        return matches;
-                    });
-                    console.log(`Filtered by CCC (${selectedCCC}, code ${cccCode}): ${filtered.length} records`);
-                } else {
-                    filtered = []; // If selectedCCC doesn't map to a code, no data matches
-                    console.log(`CCC code not found for ${selectedCCC}. Filtered length: ${filtered.length}`);
+                const targetCccCode = getCCCCodeFromName(selectedCCC, selectedRegion, selectedDivision);
+                if (targetCccCode) {
+                    filtered = filtered.filter(d => d.ccc_code === targetCccCode);
                 }
             }
-            console.log("--- Filtering Process End ---");
+
+            console.log("--- Filtering Process End. Final length:", filtered.length, "---");
             return filtered;
+        }
+
+        // Helper to get CCC code from name, optionally scoped by region/division
+        function getCCCCodeFromName(cccName, regionName, divisionName) {
+            if (!cccName) return null;
+
+            // If region and division are provided, search specifically in them
+            if (regionName && divisionName && regionData[regionName]?.divisions[divisionName]) {
+                return regionData[regionName].divisions[divisionName].cccs[cccName];
+            }
+
+            // Otherwise search everything in regionData
+            for (const r in regionData) {
+                for (const d in regionData[r].divisions) {
+                    if (regionData[r].divisions[d].cccs[cccName]) {
+                        return regionData[r].divisions[d].cccs[cccName];
+                    }
+                }
+            }
+            return null;
         }
 
         /**
@@ -1484,6 +1685,30 @@ ${dockets
         function renderCombinedFilterCards() {
             combinedFilterCards.innerHTML = ''; // Clear existing cards
 
+            // --- RBAC: Determine user's authorized hierarchy ---
+            let userAuthorizedRegion = null;
+            let userAuthorizedDivision = null;
+            let isAdmin = false;
+
+            if (currentUser) {
+                isAdmin = currentUser.role && currentUser.role.toLowerCase() === 'admin';
+
+                if (!isAdmin) {
+                    // If user has division_code, find the region and division names
+                    if (currentUser.division) {
+                        userAuthorizedDivision = getDivisionNameByCode(currentUser.division);
+                        if (userAuthorizedDivision) {
+                            userAuthorizedRegion = getRegionForDivision(userAuthorizedDivision);
+                        }
+                    }
+                    // If user has only region_code, find the region name
+                    else if (currentUser.region) {
+                        userAuthorizedRegion = getRegionNameByCode(currentUser.region);
+                    }
+                }
+            }
+            // --- End RBAC setup ---
+
             // Create cards for all regions and their divisions from the static regionData
             for (const regionName in regionData) {
                 // Create a group container for this region and its divisions
@@ -1496,6 +1721,15 @@ ${dockets
                 regionCard.textContent = toProperCase(regionName.replace(' REGION', ''));
                 regionCard.dataset.value = regionName;
                 regionCard.dataset.type = 'region';
+
+                // RBAC: Disable region if user doesn't have access
+                const hasRegionAccess = isAdmin || !userAuthorizedRegion || userAuthorizedRegion === regionName;
+                if (!hasRegionAccess) {
+                    regionCard.classList.add('disabled');
+                    regionCard.style.pointerEvents = 'none';
+                    regionCard.style.opacity = '0.4';
+                }
+
                 if (selectedRegion === regionName && !selectedDivision) {
                     regionCard.classList.add('active');
                 }
@@ -1510,6 +1744,18 @@ ${dockets
                     divisionCard.dataset.value = divisionName;
                     divisionCard.dataset.type = 'division';
 
+                    // RBAC: Disable division if user doesn't have access
+                    const hasDivisionAccess = isAdmin ||
+                        !userAuthorizedDivision ||
+                        userAuthorizedDivision === divisionName ||
+                        (userAuthorizedRegion === regionName && !userAuthorizedDivision);
+
+                    if (!hasDivisionAccess) {
+                        divisionCard.classList.add('disabled');
+                        divisionCard.style.pointerEvents = 'none';
+                        divisionCard.style.opacity = '0.4';
+                    }
+
                     // Check if this division should be active or inactive
                     if (selectedDivision === divisionName) { // This division is the active one
                         divisionCard.classList.add('active');
@@ -1518,6 +1764,7 @@ ${dockets
                         divisionCard.classList.add('inactive');
                     }
                     groupContainer.appendChild(divisionCard);
+
                 }
                 combinedFilterCards.appendChild(groupContainer);
             }
@@ -1548,7 +1795,23 @@ ${dockets
                     }
                 }
             }
-            populateSelect(cccSelect, Array.from(cccsInUse), selectedCCC, "All CCCs");
+
+            // --- RBAC: Filter CCCs if user has specific CCC code ---
+            let cccsToShow = Array.from(cccsInUse);
+            if (currentUser && currentUser.ccc && currentUser.role && currentUser.role.toLowerCase() !== 'admin') {
+                // Use robust resolver to find CCC name
+                const userCccName = getCCCNameByCode(currentUser.ccc);
+
+                // If we found the user's CCC in this division, show only that CCC
+                if (userCccName && cccsInUse.has(userCccName)) {
+                    cccsToShow = [userCccName];
+                    selectedCCC = userCccName; // Auto-select the user's CCC
+                }
+            }
+            // --- End RBAC ---
+
+            populateSelect(cccSelect, cccsToShow, selectedCCC, "All CCCs");
+
         }
 
         /**
@@ -1646,7 +1909,7 @@ ${dockets
         function getRegionDocketCounts(data) {
             const regionCounts = {};
             data.forEach(item => {
-                const region = getRegionByCCC(item.ccc_code);
+                const region = item.resolvedRegion;
                 if (region) {
                     regionCounts[region] = (regionCounts[region] || 0) + 1;
                 }
@@ -1680,7 +1943,7 @@ ${dockets
             } else {
                 noRegionDataMessage.classList.add('hidden');
                 noRegionDataMessage.style.display = 'none';
-                regionSummaryCardsContainer.style.display = 'flex'; // Ensure flex display is set for the container
+                regionSummaryCardsContainer.style.display = 'flex';
 
                 // Use the already filtered data from the updateDashboard scope
                 let currentFilteredData = getFilteredData();
@@ -1693,35 +1956,31 @@ ${dockets
 
                 if (displayLevel === 'ccc') {
                     cardNameForDisplay = selectedCCC.replace(' CCC', '');
-                    const cccCode = regionData[selectedRegion]?.divisions[selectedDivision]?.cccs[selectedCCC];
-                    // Filter the *already filtered* data further for this specific CCC
-                    const dataForCard = currentFilteredData.filter(d => d.ccc_code === cccCode);
+                    const targetCccCode = getCCCCodeFromName(selectedCCC, selectedRegion, selectedDivision);
+                    // Filter specifically for this CCC
+                    const dataForCard = currentFilteredData.filter(d => d.ccc_code === targetCccCode);
                     totalCountForCard = dataForCard.length;
                     const uniqueConIds = new Set(dataForCard.map(d => d.con_id).filter(Boolean));
                     uniqueConIdCountForCard = uniqueConIds.size;
                 } else if (displayLevel === 'division') {
                     cardNameForDisplay = toProperCase(selectedDivision.replace(' DIVISION', ''));
-                    const divisionCodeFull = regionData[selectedRegion]?.divisions[selectedDivision]?.code;
-                    const divisionCodeCsvFormat = divisionCodeFull?.substring(0, 4);
-                    // Filter the *already filtered* data further for this specific division
-                    const dataForCard = currentFilteredData.filter(d => d.Divn_code === divisionCodeCsvFormat);
+                    // Filter specifically for this division using resolved property
+                    const dataForCard = currentFilteredData.filter(d => d.resolvedDivision === selectedDivision);
                     totalCountForCard = dataForCard.length;
                     const uniqueConIds = new Set(dataForCard.map(d => d.con_id).filter(Boolean));
                     uniqueConIdCountForCard = uniqueConIds.size;
                 } else if (displayLevel === 'region' && selectedRegion && selectedRegion !== "All") {
                     cardNameForDisplay = toProperCase(selectedRegion.replace(' REGION', ''));
-                    const regionCodePrefix = regionData[selectedRegion]?.code.substring(0, 3);
-                    // Filter the *already filtered* data further for this specific region
-                    const dataForCard = currentFilteredData.filter(d => d.Divn_code?.startsWith(regionCodePrefix));
+                    // Filter specifically for this region using resolved property
+                    const dataForCard = currentFilteredData.filter(d => d.resolvedRegion === selectedRegion);
                     totalCountForCard = dataForCard.length;
                     const uniqueConIds = new Set(dataForCard.map(d => d.con_id).filter(Boolean));
                     uniqueConIdCountForCard = uniqueConIds.size;
                 } else { // 'region' and selectedRegion is "All" (or null) - show individual region cards
                     regionNames.forEach(regionName => {
-                        const count = counts[regionName]; // This count is total for the region
-                        const regionCodePrefix = regionData[regionName]?.code.substring(0, 3);
-                        // Filter the *already filtered* data further for this specific region
-                        const dataForRegion = currentFilteredData.filter(d => d.Divn_code?.startsWith(regionCodePrefix));
+                        const count = counts[regionName];
+                        // Filter the *already filtered* data further for this specific region using resolved property
+                        const dataForRegion = currentFilteredData.filter(d => d.resolvedRegion === regionName);
                         const uniqueConIdsRegion = new Set(dataForRegion.map(d => d.con_id).filter(Boolean));
                         const uniqueCountRegion = uniqueConIdsRegion.size;
 
@@ -1734,10 +1993,10 @@ ${dockets
                         `;
                         regionSummaryCardsContainer.appendChild(card);
                     });
-                    return; // Exit after rendering multiple region cards
+                    return;
                 }
 
-                // If a specific region, division, or CCC is selected, render a single card
+                // Render single aggregated card
                 const card = document.createElement('div');
                 card.className = 'region-summary-card';
                 card.innerHTML = `
@@ -1817,35 +2076,52 @@ ${dockets
 
         // Initial load of the dashboard: fetch data then update
         document.addEventListener('DOMContentLoaded', async () => {
-            // Attempt to fetch live data first
-            docketCallData = await fetchCsvData(CSV_URL);
+            // Attempt to fetch live data (CSV) and Hierarchy Mapping (from Google Sheet) in parallel
+            try {
+                const dataPromise = fetchCsvData(CSV_URL);
 
-            // If live data fetch fails or returns empty, show error
-            if (docketCallData.length === 0) {
-                errorMessage.textContent = "Failed to load data from CSV. Please ensure the Google Sheet is published to web as CSV and the URL is correct.";
+                // If MZO_HIERARCHY is available and not loaded, load it
+                let hierarchyPromise = Promise.resolve();
+                if (window.MZO_HIERARCHY && !window.MZO_HIERARCHY.isLoaded()) {
+                    hierarchyPromise = window.MZO_HIERARCHY.load();
+                }
+
+                // Wait for both
+                const [data] = await Promise.all([dataPromise, hierarchyPromise]);
+
+                // --- Hierarchy Resolution: Enrich dockets with standardized names ---
+                docketCallData = data.map(d => {
+                    const h = window.MZO_HIERARCHY.getFullHierarchy(d.ccc_code);
+                    return {
+                        ...d,
+                        resolvedRegion: h ? normalizeHierarchyName(h.region.name, 'region') : null,
+                        resolvedDivision: h ? normalizeHierarchyName(h.division.name, 'division') : null
+                    };
+                });
+
+                if (docketCallData.length === 0) {
+                    errorMessage.textContent = "Failed to load data from CSV. Please ensure the Google Sheet is published to web as CSV and the URL is correct.";
+                    errorMessage.style.display = 'block';
+                } else {
+                    errorMessage.style.display = 'none';
+                    combinedFilterCardsContainer.style.display = 'block';
+                    probTypeCardsContainer.style.display = 'grid';
+                    regionSummaryCardsContainer.style.display = 'flex';
+
+                    // --- RBAC: Now that hierarchy is loaded, resolve user permissions ---
+                    handleRBACPermissions();
+
+                    updateDashboard(); // Initial render of filters and data
+                }
+            } catch (error) {
+                console.error("Initialization error:", error);
+                errorMessage.textContent = "An error occurred during dashboard initialization. Please try again.";
                 errorMessage.style.display = 'block';
-            } else {
-                errorMessage.style.display = 'none'; // Hide error if live data loaded
-                combinedFilterCardsContainer.style.display = 'block'; // Show filter cards
-                probTypeCardsContainer.style.display = 'grid'; // Show cards grid
-                regionSummaryCardsContainer.style.display = 'flex'; // Changed to flex to align with new CSS
-                updateDashboard(); // Initial render of filters and data
             }
         });
-        function getCCCNameByCode(code) {
-            for (const region of Object.values(regionData)) {
-                for (const division of Object.values(region.divisions)) {
-                    for (const [name, cccCode] of Object.entries(division.cccs)) {
-                        if (cccCode === code) {
-                            return name;
-                        }
-                    }
-                }
-            }
-            return null;
-        }
         /**
          * Displays detailed information about a docket, or multiple dockets if a duplicate Con ID is clicked.
+ 
          * @param {Object} data - The docket object that was clicked.
          * @param {Array} allDocketsInCurrentTab - All docket objects currently displayed in the active CCC tab.
          */

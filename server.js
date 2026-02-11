@@ -112,8 +112,10 @@ app.post('/api/structures/update', (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-    console.log('Open your browser and navigate to http://localhost:3000 to use the estimator.');
-    console.log('Navigate to http://localhost:3000/admin.html to manage structures.');
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server is running on http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;

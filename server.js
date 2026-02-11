@@ -9,6 +9,12 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// Explicit route for the home page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+
 // --- File Paths ---
 const STRUCTURE_FILE = path.join(__dirname, 'data', 'structure.csv');
 
@@ -35,7 +41,7 @@ function parseCSVLine(line) {
     const values = [];
     let current = '';
     let inQuotes = false;
-    
+
     for (let i = 0; i < line.length; i++) {
         const char = line[i];
         if (char === '"') {
@@ -55,7 +61,7 @@ function parseCSVLine(line) {
 function generateCSV(structures) {
     const headers = ['id', 'name', 'description', 'voltage', 'materials', 'labour'];
     const lines = [headers.join(',')];
-    
+
     structures.forEach(s => {
         const row = [
             s.id,
@@ -67,7 +73,7 @@ function generateCSV(structures) {
         ];
         lines.push(row.join(','));
     });
-    
+
     return lines.join('\n');
 }
 
@@ -76,7 +82,7 @@ app.get('/api/structures', (req, res) => {
     try {
         const csvText = fs.readFileSync(STRUCTURE_FILE, 'utf-8');
         const structures = parseCSV(csvText);
-        
+
         // Convert to the format expected by the app
         const formattedStructures = structures.map(s => ({
             id: s.id,
@@ -86,7 +92,7 @@ app.get('/api/structures', (req, res) => {
             materials: s.materials,
             labour: s.labour
         }));
-        
+
         res.json(formattedStructures);
     } catch (error) {
         console.error("Error reading structure file:", error.message);

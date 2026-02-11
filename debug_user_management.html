@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug User Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+
+        .test {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+
+        .success {
+            border-left: 4px solid #10b981;
+        }
+
+        .error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .info {
+            border-left: 4px solid #3b82f6;
+        }
+
+        button {
+            background: #4f46e5;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #4338ca;
+        }
+
+        pre {
+            background: #000;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔍 User Management Debug Tool</h1>
+    <p>This page will help diagnose why user data isn't loading.</p>
+
+    <button onclick="runAllTests()">Run All Tests</button>
+    <button onclick="clearResults()">Clear Results</button>
+
+    <div id="results"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="scripts/auth_system.js"></script>
+    <script>
+        const AUTH_SHEET_URL = "https://docs.google.com/spreadsheets/d/1GtWgPMm-WeDNfebubp5ac76waeZGESA2bQ8JkEpHlZ4/export?format=csv&gid=0";
+        const resultsDiv = document.getElementById('results');
+
+        function addResult(title, content, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.innerHTML = `<h3>${title}</h3><div>${content}</div>`;
+            resultsDiv.appendChild(div);
+        }
+
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+
+        async function testAuthSystem() {
+            addResult('Test 1: Auth System Loaded',
+                typeof MZO_AUTH !== 'undefined'
+                    ? `✅ MZO_AUTH is loaded<pre>${JSON.stringify(Object.keys(MZO_AUTH), null, 2)}</pre>`
+                    : '❌ MZO_AUTH is NOT loaded',
+                typeof MZO_AUTH !== 'undefined' ? 'success' : 'error'
+            );
+
+            if (typeof MZO_AUTH !== 'undefined') {
+                const user = MZO_AUTH.getUser();
+                addResult('Test 2: Current User',
+                    user
+                        ? `✅ User logged in<pre>${JSON.stringify(user, null, 2)}</pre>`
+                        : '❌ No user logged in',
+                    user ? (user.role === 'admin' ? 'success' : 'error') : 'error'
+                );
+
+                if (user && user.role !== 'admin') {
+                    addResult('Test 3: Admin Check',
+                        `❌ User role is "${user.role}" (must be "admin")`,
+                        'error'
+                    );
+                } else if (user) {
+                    addResult('Test 3: Admin Check',
+                        `✅ User has admin role`,
+                        'success'
+                    );
+                }
+            }
+        }
+
+        async function testPapaParse() {
+            addResult('Test 4: PapaParse Library',
+                typeof Papa !== 'undefined'
+                    ? `✅ PapaParse is loaded (version ${Papa.version || 'unknown'})`
+                    : '❌ PapaParse is NOT loaded',
+                typeof Papa !== 'undefined' ? 'success' : 'error'
+            );
+        }
+
+        async function testGoogleSheetAccess() {
+            addResult('Test 5: Testing Google Sheet Access', '⏳ Fetching data...', 'info');
+
+            try {
+                const response = await fetch(AUTH_SHEET_URL);
+
+                if (!response.ok) {
+                    addResult('Test 5: Google Sheet Access',
+                        `❌ HTTP Error: ${response.status} ${response.statusText}<br>Sheet URL: ${AUTH_SHEET_URL}`,
+                        'error'
+                    );
+                    return;
+                }
+
+                const text = await response.text();
+
+                addResult('Test 5: Google Sheet Access',
+                    `✅ Successfully fetched data (${text.length} characters)<br><details><summary>View Raw Data</summary><pre>${text.substring(0, 500)}...</pre></details>`,
+                    'success'
+                );
+
+            } catch (error) {
+                addResult('Test 5: Google Sheet Access',
+                    `❌ Fetch Error: ${error.message}<br>Sheet URL: ${AUTH_SHEET_URL}`,
+                    'error'
+                );
+            }
+        }
+
+        async function testPapaParseWithSheet() {
+            addResult('Test 6: PapaParse with Google Sheet', '⏳ Parsing CSV...', 'info');
+
+            return new Promise((resolve) => {
+                Papa.parse(AUTH_SHEET_URL, {
+                    download: true,
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: (results) => {
+                        if (results.errors.length > 0) {
+                            addResult('Test 6: PapaParse Results',
+                                `⚠️ Parsed with errors:<pre>${JSON.stringify(results.errors, null, 2)}</pre>`,
+                                'error'
+                            );
+                        } else {
+                            addResult('Test 6: PapaParse Results',
+                                `✅ Successfully parsed ${results.data.length} rows<br><details><summary>View Parsed Data</summary><pre>${JSON.stringify(results.data.slice(0, 3), null, 2)}</pre></details>`,
+                                'success'
+                            );
+                        }
+                        resolve();
+                    },
+                    error: (err) => {
+                        addResult('Test 6: PapaParse Results',
+                            `❌ Parse Error: ${err.message}`,
+                            'error'
+                        );
+                        resolve();
+                    }
+                });
+            });
+        }
+
+        async function testSheetPublicAccess() {
+            const sheetId = '1GtWgPMm-WeDNfebubp5ac76waeZGESA2bQ8JkEpHlZ4';
+            const testUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
+
+            addResult('Test 7: Sheet Sharing Settings',
+                `📋 Sheet ID: ${sheetId}<br>
+                ✅ Test URL: <a href="${testUrl}" target="_blank" style="color:#60a5fa">${testUrl}</a><br>
+                ℹ️ Make sure sheet is set to "Anyone with the link can VIEW"`,
+                'info'
+            );
+        }
+
+        async function runAllTests() {
+            clearResults();
+            addResult('Debug Started', new Date().toLocaleString(), 'info');
+
+            await testAuthSystem();
+            await testPapaParse();
+            await testSheetPublicAccess();
+            await testGoogleSheetAccess();
+            await testPapaParseWithSheet();
+
+            addResult('Debug Complete', 'All tests finished. Review results above.', 'success');
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('DOMContentLoaded', runAllTests);
+    </script>
+</body>
+
+</html>

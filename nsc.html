@@ -549,6 +549,77 @@
         font-size: 0.65rem !important;
         color: var(--text-tertiary) !important;
       }
+
+      .date-picker-input {
+        width: 110px !important;
+        font-size: 0.7rem !important;
+        padding: 2px 4px !important;
+      }
+
+      .date-label {
+        font-size: 0.6rem !important;
+      }
+    }
+
+    /* Ultra-Minimal Delay Slider */
+    .date-picker-input {
+      border: none;
+      font-size: 0.8rem;
+      font-weight: 500;
+      background: transparent;
+      width: 90px !important;
+      cursor: pointer;
+      color: var(--primary);
+      text-align: center;
+    }
+
+    .date-picker-input:focus {
+      outline: none;
+    }
+
+    .delay-summary-badge {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #721c24;
+      background: rgba(248, 215, 218, 0.5);
+      padding: 4px 16px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(114, 28, 36, 0.1);
+    }
+
+    /* Remove noUiSlider tooltips */
+    .noUi-tooltip {
+      display: none !important;
+    }
+
+    .noUi-handle .noUi-tooltip {
+      display: none !important;
+    }
+
+    [aria-expanded="true"] #delayFilterTitle {
+      display: none;
+    }
+
+    @media (max-width: 350px) {
+      .date-picker-input {
+        width: 85px !important;
+        font-size: 0.7rem !important;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .date-input-group {
+        max-width: 130px;
+        gap: 4px;
+      }
+
+      .date-picker-input {
+        width: 100px !important;
+        font-size: 0.75rem !important;
+      }
     }
 
     /* Sub-rows and expandable content */
@@ -1140,17 +1211,29 @@
       <div class="d-flex justify-content-between align-items-center" data-bs-toggle="collapse"
         data-bs-target="#delaySliderCollapse" aria-expanded="false" aria-controls="delaySliderCollapse"
         style="cursor: pointer;">
-        <label class="mb-0" style="font-weight: 600; font-size: 0.9rem;">Select delay range for connection</label>
+        <label id="delayFilterTitle" class="mb-0" style="font-weight: 600; font-size: 0.9rem;">Connection Delay
+          Filter</label>
         <i class="fas fa-chevron-down"></i>
       </div>
       <div class="collapse" id="delaySliderCollapse">
-        <div id="delaySlider" style="margin-top: 1rem;"></div>
-        <div id="delaySliderCount"
-          style="margin-top: -0.2rem; text-align: center; z-index:100;font-size: 0.75rem; font-style: italic; color: #d00000;">
+        <div class="text-center pt-2 mb-2">
+          <div class="delay-summary-badge">
+            <span id="delaySliderCount">0 Pending</span>
+          </div>
         </div>
-        <div class="d-flex justify-content-between mt-2 small">
-          <span id="delayMinLabel">0 days</span>
-          <span id="delayMaxLabel">100 days</span>
+
+        <div id="delaySlider" style="margin-top: 0.5rem; margin-bottom: 0.8rem;"></div>
+
+        <div class="d-flex justify-content-between px-1 mb-2">
+          <span id="delayMinDuration" style="font-size: 0.75rem; color: var(--primary); font-weight: 600;">0 days</span>
+          <span id="delayMaxDuration" style="font-size: 0.75rem; color: var(--primary); font-weight: 600;">100
+            days</span>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-2 px-1">
+          <input type="date" id="delayNewestDate" class="date-picker-input" title="Applications From">
+          <div style="height: 1px; background: rgba(0,0,0,0.1); flex: 1; margin: 0 15px;"></div>
+          <input type="date" id="delayOldestDate" class="date-picker-input" title="Applications To">
         </div>
       </div>
     </div>
@@ -1478,7 +1561,6 @@
             max: delaySCMax
           },
           tooltips: [false, false],
-
           step: 1,
           behaviour: 'drag-tap'
         });
@@ -1487,15 +1569,31 @@
           delaySCMin = parseFloat(values[0]);
           delaySCMax = parseFloat(values[1]);
 
-          document.getElementById('delayMinLabel').textContent = formatReadableDuration(delaySCMin);
-          document.getElementById('delayMaxLabel').textContent = formatReadableDuration(delaySCMax);
+          const cleanDuration = (v) => formatReadableDuration(v).replace(/<\/?[^>]+(>|$)/g, "");
+          document.getElementById('delayMinDuration').textContent = cleanDuration(delaySCMin);
+          document.getElementById('delayMaxDuration').textContent = cleanDuration(delaySCMax);
 
           const matchingCount = rawData.filter(d => {
             const v = parseFloat(d.DelayInSC);
             return !isNaN(v) && v >= delaySCMin && v <= delaySCMax;
           }).length;
 
-          document.getElementById('delaySliderCount').textContent = `${matchingCount} pending in the range`;
+          document.getElementById('delaySliderCount').textContent = `${matchingCount} Pending`;
+
+          // Sync Date Inputs
+          const todayStr = rawData && rawData.length > 1 ? rawData[1].TODAY : null;
+          if (todayStr) {
+            const [dd, mm, yyyy] = todayStr.split('/');
+            const refDate = new Date(yyyy, mm - 1, dd);
+
+            const minD = new Date(refDate);
+            minD.setDate(refDate.getDate() - delaySCMin);
+            const maxD = new Date(refDate);
+            maxD.setDate(refDate.getDate() - delaySCMax);
+
+            document.getElementById('delayNewestDate').value = minD.toISOString().split('T')[0];
+            document.getElementById('delayOldestDate').value = maxD.toISOString().split('T')[0];
+          }
         });
 
 
@@ -1511,6 +1609,27 @@
 
         populateFilters();
         updateRadioCounts(rawData); // Initial population of radio counts
+
+        // Add Date Input Event Listeners
+        const syncSlider = () => {
+          const todayStr = rawData[1].TODAY;
+          const [dd, mm, yyyy] = todayStr.split('/');
+          const refDate = new Date(yyyy, mm - 1, dd);
+
+          const d1 = new Date(document.getElementById('delayNewestDate').value);
+          const d2 = new Date(document.getElementById('delayOldestDate').value);
+
+          if (!isNaN(d1) && !isNaN(d2)) {
+            const v1 = Math.max(0, Math.round((refDate - d1) / 86400000));
+            const v2 = Math.max(0, Math.round((refDate - d2) / 86400000));
+            slider.noUiSlider.set([Math.min(v1, v2), Math.max(v1, v2)]);
+            applyFilters();
+          }
+        };
+
+        document.getElementById('delayNewestDate').addEventListener('change', syncSlider);
+        document.getElementById('delayOldestDate').addEventListener('change', syncSlider);
+
         updateDashboard();
         drawTables(); // instead of drawCharts();
         showUrgentModal(rawData);

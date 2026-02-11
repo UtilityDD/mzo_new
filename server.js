@@ -9,12 +9,6 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Explicit route for the home page
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-
 // --- File Paths ---
 const STRUCTURE_FILE = path.join(__dirname, 'data', 'structure.csv');
 
@@ -118,10 +112,8 @@ app.post('/api/structures/update', (req, res) => {
     }
 });
 
-if (require.main === module) {
-    app.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`);
-    });
-}
-
-module.exports = app;
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+    console.log('Open your browser and navigate to http://localhost:3000 to use the estimator.');
+    console.log('Navigate to http://localhost:3000/admin.html to manage structures.');
+});
